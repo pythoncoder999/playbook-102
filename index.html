@@ -29,7 +29,7 @@
         }
 
         .dashboard-container {
-            max-width: 1550px;
+            max-width: 1650px;
             margin: 0 auto;
             display: flex;
             flex-direction: column;
@@ -69,7 +69,6 @@
             gap: 16px;
         }
 
-        /* Live Wire Alert Box */
         .live-news-ticker {
             background: rgba(249, 115, 22, 0.1);
             border: 1px solid rgba(249, 115, 22, 0.3);
@@ -122,7 +121,7 @@
             gap: 24px;
         }
 
-        @media (min-width: 1024px) {
+        @media (min-width: 1200px) {
             .layout-grid { grid-template-columns: 280px 1fr; }
         }
 
@@ -152,7 +151,6 @@
             padding-bottom: 8px;
         }
 
-        /* Risk Calculator Form Styles */
         .form-group { margin-bottom: 12px; }
         label {
             display: block;
@@ -202,9 +200,24 @@
 
         .navigation-row {
             display: flex;
-            gap: 8px;
+            justify-content: space-between;
+            align-items: center;
             border-bottom: 1px solid var(--border);
             padding-bottom: 12px;
+        }
+
+        .nav-buttons {
+            display: flex;
+            gap: 8px;
+        }
+
+        .weekly-perf-badge {
+            font-size: 0.85rem;
+            font-weight: 600;
+            background: var(--bg-card);
+            border: 1px solid var(--border);
+            padding: 6px 14px;
+            border-radius: 6px;
         }
 
         .nav-btn {
@@ -225,7 +238,7 @@
 
         .matrix-grid {
             display: grid;
-            grid-template-columns: repeat(auto-fill, minmax(285px, 1fr));
+            grid-template-columns: repeat(auto-fill, minmax(300px, 1fr));
             gap: 16px;
         }
 
@@ -247,13 +260,8 @@
             box-shadow: 0 0 16px var(--accent-glow);
         }
 
-        /* System Override Border Style for Saturday Warning Card */
         .strategy-card.saturday-card {
             border: 1px dashed rgba(249, 115, 22, 0.4);
-        }
-        .strategy-card.saturday-card.live-focus {
-            border: 1px solid var(--orange);
-            box-shadow: 0 0 16px rgba(249, 115, 22, 0.15);
         }
 
         .live-tag {
@@ -268,11 +276,7 @@
             font-weight: bold;
             text-transform: uppercase;
         }
-
-        .live-tag.warn {
-            background: rgba(249, 115, 22, 0.2);
-            color: var(--orange);
-        }
+        .live-tag.warn { background: rgba(249, 115, 22, 0.2); color: var(--orange); }
 
         .card-header {
             display: flex;
@@ -280,8 +284,13 @@
             margin-bottom: 12px;
         }
 
-        .day-name { font-weight: 700; font-size: 1.1rem; }
-        .meta-context { font-size: 0.75rem; color: var(--text-muted); }
+        .day-name { font-weight: 700; font-size: 1.1rem; display: flex; align-items: center; justify-content: space-between; }
+        .change-pill { font-size: 0.75rem; font-weight: 600; padding: 2px 6px; border-radius: 4px; }
+        .change-pill.up { background: rgba(16, 185, 129, 0.15); color: var(--green); }
+        .change-pill.down { background: rgba(239, 68, 68, 0.15); color: var(--red); }
+        .change-pill.flat { background: var(--bg-input); color: var(--text-muted); }
+        
+        .meta-context { font-size: 0.75rem; color: var(--text-muted); margin-top: 2px; }
 
         .rule-box {
             background-color: var(--bg-main);
@@ -318,7 +327,6 @@
         .rule-tag.macro { color: var(--orange); }
         .rule-desc { color: var(--text-main); }
 
-        /* Master Progress Counter */
         .progress-bar-container {
             background-color: var(--bg-input);
             height: 6px;
@@ -442,10 +450,15 @@
 
         <div class="main-content">
             <div class="navigation-row">
-                <button class="nav-btn" id="wk-1" onclick="handleWeekChange(1)">Week 1</button>
-                <button class="nav-btn" id="wk-2" onclick="handleWeekChange(2)">Week 2</button>
-                <button class="nav-btn" id="wk-3" onclick="handleWeekChange(3)">Week 3</button>
-                <button class="nav-btn" id="wk-4" onclick="handleWeekChange(4)">Week 4</button>
+                <div class="nav-buttons">
+                    <button class="nav-btn" id="wk-1" onclick="handleWeekChange(1)">Week 1</button>
+                    <button class="nav-btn" id="wk-2" onclick="handleWeekChange(2)">Week 2</button>
+                    <button class="nav-btn" id="wk-3" onclick="handleWeekChange(3)">Week 3</button>
+                    <button class="nav-btn" id="wk-4" onclick="handleWeekChange(4)">Week 4</button>
+                </div>
+                <div class="weekly-perf-badge" id="weekly-aggregate-perf">
+                    Weekly Rolling: --%
+                </div>
             </div>
             
             <div class="matrix-grid" id="matrix"></div>
@@ -470,6 +483,33 @@
         { date: "Jun 08", val: 647.90 }, { date: "Jun 09", val: 651.92 }, { date: "Jun 10", val: 656.40 }, { date: "Jun 11", val: 654.10 }, { date: "Jun 12", val: 664.20 },
         { date: "Jun 15", val: 671.30 }, { date: "Jun 16", val: 679.50 }, { date: "Jun 17", val: 682.10 }, { date: "Jun 18", val: 685.45 }, { date: "Jun 19", val: 688.11 }
     ];
+
+    // Sub-indexes to parse historical array back down into 5-day blocks dynamically
+    function getPerformanceMetrics(weekNumber) {
+        const endIndex = rawVooHistory.length - 1 - ((3 - weekNumber) * 5);
+        const startIndex = endIndex - 4;
+
+        if (startIndex < 0 || endIndex >= rawVooHistory.length) {
+            return { Monday: 0, Tuesday: 0, Wednesday: 0, Thursday: 0, Friday: 0, Saturday: 0, aggregate: 0 };
+        }
+
+        const currentWeekSlice = rawVooHistory.slice(startIndex, endIndex + 1);
+        const fridayPrevWeekClose = rawVooHistory[startIndex - 1] ? rawVooHistory[startIndex - 1].val : currentWeekSlice[0].val;
+
+        const calcPct = (curr, prev) => prev ? ((curr - prev) / prev) * 100 : 0;
+
+        const results = {
+            Monday: calcPct(currentWeekSlice[0].val, fridayPrevWeekClose),
+            Tuesday: calcPct(currentWeekSlice[1].val, currentWeekSlice[0].val),
+            Wednesday: calcPct(currentWeekSlice[2].val, currentWeekSlice[1].val),
+            Thursday: calcPct(currentWeekSlice[3].val, currentWeekSlice[2].val),
+            Friday: calcPct(currentWeekSlice[4].val, currentWeekSlice[3].val),
+            Saturday: calcPct(currentWeekSlice[4].val, fridayPrevWeekClose), // Weekend risk benchmark
+            aggregate: calcPct(currentWeekSlice[4].val, fridayPrevWeekClose)
+        };
+
+        return results;
+    }
 
     const simulatedMacroWires = [
         { msg: "⚠️ FED FLASH: Chairman hints at aggressive emergency rate normalization schedule.", drift: -12.50 },
@@ -587,7 +627,6 @@
         paintLineChart();
     });
 
-    // Wire integration inside data update stream
     function retrieveCurrentData() {
         const updateBtn = document.getElementById('update-data-btn');
         const ticker = document.getElementById('news-ticker');
@@ -595,14 +634,12 @@
         updateBtn.innerText = 'Fetching...';
 
         setTimeout(() => {
-            // Select random macro wire event row
             const selectedWire = simulatedMacroWires[Math.floor(Math.random() * simulatedMacroWires.length)];
             ticker.innerText = selectedWire.msg;
             ticker.style.display = 'block';
 
             rawVooHistory = rawVooHistory.map((item, idx) => {
                 if (idx === rawVooHistory.length - 1) {
-                    // Inject structural event drift variance directly into index valuation parameter
                     const baseVariance = (Math.random() - 0.4) * 3.5;
                     const finalCalculatedPrice = parseFloat((item.val + baseVariance + selectedWire.drift).toFixed(2));
                     document.getElementById('etf-price').value = finalCalculatedPrice;
@@ -614,6 +651,7 @@
 
             paintLineChart();
             calculateRiskModel();
+            drawOperationalMatrix();
 
             updateBtn.disabled = false;
             updateBtn.innerText = 'Fetch Current Data';
@@ -634,11 +672,24 @@
         const activeNavButton = document.getElementById(`wk-${displayedWeek}`);
         if (activeNavButton) activeNavButton.classList.add('active');
 
+        // Fetch percentage delta blocks based on selected week
+        const perfData = getPerformanceMetrics(displayedWeek);
+
+        // Render aggregate badge
+        const aggBadge = document.getElementById('weekly-aggregate-perf');
+        const sign = perfData.aggregate >= 0 ? '+' : '';
+        aggBadge.innerText = `Weekly Rolling: ${sign}${perfData.aggregate.toFixed(2)}%`;
+        aggBadge.style.color = perfData.aggregate >= 0 ? 'var(--green)' : 'var(--red)';
+
         Object.keys(operationalDaysBlueprint).forEach(dayKey => {
             const dataPackage = operationalDaysBlueprint[dayKey];
             const identityString = `${displayedMonth}-W${displayedWeek}-${dayKey}`;
             const isTodayCard = (isCurrentlyActiveWindow && dayKey === currentActiveTargetDay);
             const isSaturday = (dayKey === "Saturday");
+
+            const dailyDelta = perfData[dayKey] || 0;
+            const deltaSign = dailyDelta >= 0 ? '+' : '';
+            const deltaClass = dailyDelta > 0 ? 'up' : (dailyDelta < 0 ? 'down' : 'flat');
 
             const templateBlock = document.createElement('div');
             templateBlock.className = `strategy-card ${isSaturday ? 'saturday-card' : ''} ${isTodayCard ? 'live-focus' : ''}`;
@@ -656,7 +707,10 @@
             templateBlock.innerHTML = `
                 ${dynamicHeaderTag}
                 <div class="card-header">
-                    <span class="day-name">${isSaturday ? 'Macro Scope (Sat)' : dayKey}</span>
+                    <span class="day-name">
+                        <span>${isSaturday ? 'Macro Scope (Sat)' : dayKey}</span>
+                        <span class="change-pill ${deltaClass}">${deltaSign}${dailyDelta.toFixed(2)}%</span>
+                    </span>
                     <span class="meta-context">${nameOfSelectedMonth} • Week ${displayedWeek} Scope</span>
                 </div>
                 
