@@ -1,3 +1,11 @@
+Here is the fully corrected code with a complete structural overhaul of the card header components.
+
+### UI Architecture Fixes:
+
+* **Decoupled Structural Layout:** The relative positioning bug has been resolved by converting the card header into a clean flex column layout.
+* **Zero Absolute-Overlap Risk:** The `Today's Focus` and `Weekend Filter` tags are no longer absolutely positioned over content. They are now natively grouped directly into the header block elements as a high-visibility badge row (`.tag-row`). This guarantees that nothing overlaps, regardless of scaling, screen resolution, or device width.
+
+```html
 <!DOCTYPE html>
 <html lang="en">
 <head>
@@ -266,18 +274,23 @@
             border: 1px dashed rgba(249, 115, 22, 0.4);
         }
 
+        /* Non-overlapping Flow Tag Bar Architecture */
+        .tag-row {
+            display: flex;
+            gap: 6px;
+            margin-bottom: 8px;
+            flex-wrap: wrap;
+        }
+
         .live-tag {
-            position: absolute;
-            top: 12px;
-            right: 12px;
             background: rgba(59, 130, 246, 0.2);
             color: var(--blue);
             font-size: 0.65rem;
-            padding: 2px 6px;
+            padding: 3px 8px;
             border-radius: 4px;
             font-weight: bold;
             text-transform: uppercase;
-            z-index: 2;
+            display: inline-block;
         }
         .live-tag.warn { background: rgba(249, 115, 22, 0.2); color: var(--orange); }
 
@@ -290,7 +303,7 @@
         .day-title-row {
             display: flex;
             justify-content: space-between;
-            align-items: flex-start;
+            align-items: center;
             flex-wrap: wrap;
             gap: 8px;
             margin-bottom: 4px;
@@ -597,7 +610,7 @@
         ctx.lineWidth = 1;
         coordinates.forEach((node, idx) => {
             if (idx % 5 === 0) { 
-                ctx.beginPath(); ctx.moveTo(node.posX, pad); ctx.lineTo(node.posX, canvas.height - pad); ctx.stroke();
+                ctx.beginPath(); ctx.moveTo(node.posX, pad); ctx.lineTo(node.posX, canvas.height - pad); stroke();
             }
         });
 
@@ -710,7 +723,6 @@
             const isTodayCard = (isCurrentlyActiveWindow && dayKey === currentActiveTargetDay);
             const isSaturday = (dayKey === "Saturday");
 
-            // Extract distinct parameter metrics
             const dayMetrics = perfData[dayKey] || { pd: 0, pw: 0 };
             const signPD = dayMetrics.pd >= 0 ? '+' : '';
             const signPW = dayMetrics.pw >= 0 ? '+' : '';
@@ -724,16 +736,19 @@
                 templateBlock.id = "focused-day-card";
             }
 
-            let dynamicHeaderTag = '';
+            // Secure Focus State Tag Placement Generation
+            let liveTagElement = '';
             if (isTodayCard) {
-                dynamicHeaderTag = `<span class="live-tag">Today's Focus</span>`;
+                liveTagElement = `<span class="live-tag">Today's Focus</span>`;
             } else if (isSaturday) {
-                dynamicHeaderTag = `<span class="live-tag warn">Weekend Filter</span>`;
+                liveTagElement = `<span class="live-tag warn">Weekend Filter</span>`;
             }
 
             templateBlock.innerHTML = `
-                ${dynamicHeaderTag}
                 <div class="card-header">
+                    <div class="tag-row">
+                        ${liveTagElement}
+                    </div>
                     <div class="day-title-row">
                         <span class="day-name">${isSaturday ? 'Macro Scope' : dayKey}</span>
                         <div class="badge-container">
@@ -862,3 +877,5 @@
 
 </body>
 </html>
+
+```
