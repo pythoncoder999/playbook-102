@@ -14,6 +14,7 @@
             --green: #10b981;
             --red: #ef4444;
             --blue: #3b82f6;
+            --orange: #f97316;
             --border: #1e293b;
             --accent-glow: rgba(59, 130, 246, 0.25);
         }
@@ -28,7 +29,7 @@
         }
 
         .dashboard-container {
-            max-width: 1400px;
+            max-width: 1550px;
             margin: 0 auto;
             display: flex;
             flex-direction: column;
@@ -65,7 +66,19 @@
         .chart-actions {
             display: flex;
             align-items: center;
-            gap: 12px;
+            gap: 16px;
+        }
+
+        /* Live Wire Alert Box */
+        .live-news-ticker {
+            background: rgba(249, 115, 22, 0.1);
+            border: 1px solid rgba(249, 115, 22, 0.3);
+            color: var(--orange);
+            font-size: 0.8rem;
+            padding: 4px 12px;
+            border-radius: 6px;
+            display: none;
+            font-weight: 500;
         }
 
         .update-btn {
@@ -80,14 +93,8 @@
             transition: background-color 0.2s, opacity 0.2s;
         }
 
-        .update-btn:hover {
-            background-color: #2563eb;
-        }
-
-        .update-btn:disabled {
-            opacity: 0.6;
-            cursor: not-allowed;
-        }
+        .update-btn:hover { background-color: #2563eb; }
+        .update-btn:disabled { opacity: 0.6; cursor: not-allowed; }
 
         .chart-wrapper {
             width: 100%;
@@ -116,9 +123,7 @@
         }
 
         @media (min-width: 1024px) {
-            .layout-grid {
-                grid-template-columns: 280px 1fr;
-            }
+            .layout-grid { grid-template-columns: 280px 1fr; }
         }
 
         /* Sidebar Toolkit */
@@ -148,10 +153,7 @@
         }
 
         /* Risk Calculator Form Styles */
-        .form-group {
-            margin-bottom: 12px;
-        }
-
+        .form-group { margin-bottom: 12px; }
         label {
             display: block;
             font-size: 0.8rem;
@@ -171,10 +173,7 @@
             box-sizing: border-box;
             font-size: 0.95rem;
         }
-
-        input:focus, select:focus {
-            outline: 1px solid var(--blue);
-        }
+        input:focus, select:focus { outline: 1px solid var(--blue); }
 
         .calc-result {
             background-color: var(--bg-main);
@@ -218,7 +217,6 @@
             font-size: 0.85rem;
             font-weight: 600;
         }
-
         .nav-btn.active {
             background: var(--blue);
             color: var(--text-main);
@@ -227,7 +225,7 @@
 
         .matrix-grid {
             display: grid;
-            grid-template-columns: repeat(auto-fill, minmax(280px, 1fr));
+            grid-template-columns: repeat(auto-fill, minmax(285px, 1fr));
             gap: 16px;
         }
 
@@ -249,6 +247,15 @@
             box-shadow: 0 0 16px var(--accent-glow);
         }
 
+        /* System Override Border Style for Saturday Warning Card */
+        .strategy-card.saturday-card {
+            border: 1px dashed rgba(249, 115, 22, 0.4);
+        }
+        .strategy-card.saturday-card.live-focus {
+            border: 1px solid var(--orange);
+            box-shadow: 0 0 16px rgba(249, 115, 22, 0.15);
+        }
+
         .live-tag {
             position: absolute;
             top: 12px;
@@ -260,6 +267,11 @@
             border-radius: 4px;
             font-weight: bold;
             text-transform: uppercase;
+        }
+
+        .live-tag.warn {
+            background: rgba(249, 115, 22, 0.2);
+            color: var(--orange);
         }
 
         .card-header {
@@ -303,6 +315,7 @@
         }
         .rule-tag.buy { color: var(--green); }
         .rule-tag.sell { color: var(--red); }
+        .rule-tag.macro { color: var(--orange); }
         .rule-desc { color: var(--text-main); }
 
         /* Master Progress Counter */
@@ -341,7 +354,7 @@
         <div style="text-align: right;">
             <div class="summary-stats">
                 <span>Playbook Compliance</span>
-                <span id="progress-text">0/10 Actions (0%)</span>
+                <span id="progress-text">0/12 Actions (0%)</span>
             </div>
             <div class="progress-bar-container" style="width: 200px;">
                 <div class="progress-bar-fill" id="progress-fill"></div>
@@ -353,6 +366,7 @@
         <div class="chart-header">
             <span style="font-weight: 600; font-size: 0.95rem;">VOO Benchmark Index Price Action (Daily Data Points)</span>
             <div class="chart-actions">
+                <div class="live-news-ticker" id="news-ticker">Wire Status: Nominal</div>
                 <span style="font-size: 0.8rem; color: var(--text-muted);" id="live-time-stamp">System Scope Active</span>
                 <button class="update-btn" id="update-data-btn" onclick="retrieveCurrentData()">Fetch Current Data</button>
             </div>
@@ -457,20 +471,27 @@
         { date: "Jun 15", val: 671.30 }, { date: "Jun 16", val: 679.50 }, { date: "Jun 17", val: 682.10 }, { date: "Jun 18", val: 685.45 }, { date: "Jun 19", val: 688.11 }
     ];
 
+    const simulatedMacroWires = [
+        { msg: "⚠️ FED FLASH: Chairman hints at aggressive emergency rate normalization schedule.", drift: -12.50 },
+        { msg: "⚠️ TARIFF ALERTS: Trump announces sudden 25% import levies on industrial components.", drift: -8.20 },
+        { msg: "⚠️ GEOPOLITICS WIRE: Conflict risk escalates inside critical maritime trading canals.", drift: -14.10 },
+        { msg: "ℹ️ FEDERAL HOLIDAY: Markets closed for Juneteenth Observances.", drift: 0.00 },
+        { msg: "⚠️ TAX REFORM EXCLUSIVE: Trump pledges sweeping corporate deregulation strategy.", drift: 11.40 },
+        { msg: "⚠️ FOMC MINUTES: Fed signals complete balance sheet stabilization targets.", drift: 6.30 }
+    ];
+
     const operationalDaysBlueprint = {
         "Monday": { buy: "Evaluate overnight session gaps; launch long exposures if VOO prints structural strength above prior daily high patterns.", sell: "Liquidate tactical momentum calls if broader index matrices drop below the initial 30-minute opening range bar." },
         "Tuesday": { buy: "Add long units if institutional volume sweeps confirm defense of the moving average lines.", sell: "Scale back speculative weights if trading depth scales lower than the 5-day moving average metrics." },
         "Wednesday": { buy: "Deploy capital reserves inside mid-week algorithmic liquidity traps.", sell: "Trim beta allocations if macro updates introduce systematic friction." },
         "Thursday": { buy: "Add shares if the index tags localized support thresholds.", sell: "Enforce trailing stop architectures across shorter expiration option layers." },
-        "Friday": { buy: "Incorporate additions into foundational index core slots if weekly bars verify high retention rates.", sell: "Secure cash buffers by managing exposed parameters near the weekly close." }
+        "Friday": { buy: "Incorporate additions into foundational index core slots if weekly bars verify high retention rates.", sell: "Secure cash buffers by managing exposed parameters near the weekly close." },
+        "Saturday": { buy: "Audit upcoming weekend calendar blocks for systematic risk parameters.", sell: "Review open directional margin positions to hedge potential Sunday evening futures gaps." }
     };
 
-    // Calculate current localized day framework
     function getTargetDay() {
         const weekdays = ["Sunday", "Monday", "Tuesday", "Wednesday", "Thursday", "Friday", "Saturday"];
         const realDayName = weekdays[new Date().getDay()];
-        
-        // Weekend mitigation override rule
         if (realDayName === "Saturday" || realDayName === "Sunday") {
             return "Monday";
         }
@@ -478,7 +499,6 @@
     }
 
     const currentActiveTargetDay = getTargetDay();
-
     let displayedMonth = 5; 
     let displayedWeek = 3;  
     
@@ -508,7 +528,6 @@
             return { posX, posY, info: pt };
         });
 
-        // Vertical Grid lines
         ctx.strokeStyle = '#151c2e';
         ctx.lineWidth = 1;
         coordinates.forEach((node, idx) => {
@@ -517,14 +536,12 @@
             }
         });
 
-        // Horizontal Grid lines
         ctx.strokeStyle = '#1e293b';
         for (let i = 0; i <= 4; i++) {
             const axisY = pad + (i / 4) * h;
             ctx.beginPath(); ctx.moveTo(pad, axisY); ctx.lineTo(canvas.width - pad, axisY); ctx.stroke();
         }
 
-        // Draw detailed daily trend line trace
         ctx.strokeStyle = '#3b82f6';
         ctx.lineWidth = 2.5;
         ctx.beginPath();
@@ -570,21 +587,29 @@
         paintLineChart();
     });
 
+    // Wire integration inside data update stream
     function retrieveCurrentData() {
         const updateBtn = document.getElementById('update-data-btn');
+        const ticker = document.getElementById('news-ticker');
         updateBtn.disabled = true;
         updateBtn.innerText = 'Fetching...';
 
         setTimeout(() => {
+            // Select random macro wire event row
+            const selectedWire = simulatedMacroWires[Math.floor(Math.random() * simulatedMacroWires.length)];
+            ticker.innerText = selectedWire.msg;
+            ticker.style.display = 'block';
+
             rawVooHistory = rawVooHistory.map((item, idx) => {
                 if (idx === rawVooHistory.length - 1) {
-                    const variance = (Math.random() - 0.4) * 4.5; 
-                    const updatedVal = parseFloat((item.val + variance).toFixed(2));
-                    document.getElementById('etf-price').value = updatedVal;
-                    return { date: item.date, val: updatedVal };
+                    // Inject structural event drift variance directly into index valuation parameter
+                    const baseVariance = (Math.random() - 0.4) * 3.5;
+                    const finalCalculatedPrice = parseFloat((item.val + baseVariance + selectedWire.drift).toFixed(2));
+                    document.getElementById('etf-price').value = finalCalculatedPrice;
+                    return { date: item.date, val: finalCalculatedPrice };
                 }
-                const drift = (Math.random() - 0.5) * 1.5;
-                return { date: item.date, val: parseFloat((item.val + drift).toFixed(2)) };
+                const baseDrift = (Math.random() - 0.5) * 1.2;
+                return { date: item.date, val: parseFloat((item.val + baseDrift).toFixed(2)) };
             });
 
             paintLineChart();
@@ -592,7 +617,7 @@
 
             updateBtn.disabled = false;
             updateBtn.innerText = 'Fetch Current Data';
-        }, 800);
+        }, 900);
     }
 
     const monthLabelsArray = ["January", "February", "March", "April", "May", "June", "July", "August", "September", "October", "November", "December"];
@@ -613,26 +638,32 @@
             const dataPackage = operationalDaysBlueprint[dayKey];
             const identityString = `${displayedMonth}-W${displayedWeek}-${dayKey}`;
             const isTodayCard = (isCurrentlyActiveWindow && dayKey === currentActiveTargetDay);
+            const isSaturday = (dayKey === "Saturday");
 
             const templateBlock = document.createElement('div');
-            templateBlock.className = `strategy-card ${isTodayCard ? 'live-focus' : ''}`;
+            templateBlock.className = `strategy-card ${isSaturday ? 'saturday-card' : ''} ${isTodayCard ? 'live-focus' : ''}`;
             if(isTodayCard) {
                 templateBlock.id = "focused-day-card";
             }
 
-            let dynamicHeaderTag = isTodayCard ? `<span class="live-tag">Today's Focus</span>` : '';
+            let dynamicHeaderTag = '';
+            if (isTodayCard) {
+                dynamicHeaderTag = `<span class="live-tag">Today's Focus</span>`;
+            } else if (isSaturday) {
+                dynamicHeaderTag = `<span class="live-tag warn">Weekend Filter</span>`;
+            }
 
             templateBlock.innerHTML = `
                 ${dynamicHeaderTag}
                 <div class="card-header">
-                    <span class="day-name">${dayKey}</span>
+                    <span class="day-name">${isSaturday ? 'Macro Scope (Sat)' : dayKey}</span>
                     <span class="meta-context">${nameOfSelectedMonth} • Week ${displayedWeek} Scope</span>
                 </div>
                 
                 <div class="rule-box" onclick="triggerRowExecution('${identityString}-buy')">
                     <input type="checkbox" id="${identityString}-buy" class="rule-cb" data-key="${identityString}-buy" onclick="event.stopPropagation(); updateGlobalMetrics();">
                     <div class="rule-content">
-                        <span class="rule-tag buy">Buy Trigger</span>
+                        <span class="rule-tag ${isSaturday ? 'macro' : 'buy'}">${isSaturday ? 'Overnight Risk' : 'Buy Trigger'}</span>
                         <div class="rule-desc">${dataPackage.buy}</div>
                     </div>
                 </div>
@@ -640,7 +671,7 @@
                 <div class="rule-box" onclick="triggerRowExecution('${identityString}-sell')">
                     <input type="checkbox" id="${identityString}-sell" class="rule-cb" data-key="${identityString}-sell" onclick="event.stopPropagation(); updateGlobalMetrics();">
                     <div class="rule-content">
-                        <span class="rule-tag sell">Sell Trim</span>
+                        <span class="rule-tag ${isSaturday ? 'macro' : 'sell'}">${isSaturday ? 'Gap Hedge' : 'Sell Trim'}</span>
                         <div class="rule-desc">${dataPackage.sell}</div>
                     </div>
                 </div>
@@ -649,7 +680,6 @@
         });
         loadSavedStates();
         
-        // Auto-scroll the programmatically focused day card into immediate view
         setTimeout(() => {
             const focusedCard = document.getElementById("focused-day-card");
             if (focusedCard) {
