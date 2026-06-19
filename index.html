@@ -3,241 +3,434 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>ETF Annual Strategy Playbook</title>
+    <title>Advanced ETF Execution Playbook</title>
     <style>
         :root {
-            --bg-color: #0f172a;
-            --card-bg: #1e293b;
+            --bg-main: #0b0f19;
+            --bg-card: #131a2c;
+            --bg-input: #1e293b;
             --text-main: #f8fafc;
-            --text-muted: #94a3b8;
-            --primary-green: #10b981;
-            --primary-red: #ef4444;
-            --accent-blue: #3b82f6;
+            --text-muted: #64748b;
+            --green: #10b981;
+            --red: #ef4444;
+            --blue: #3b82f6;
+            --border: #1e293b;
         }
 
         body {
-            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
-            background-color: var(--bg-color);
+            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Helvetica, Arial, sans-serif;
+            background-color: var(--bg-main);
             color: var(--text-main);
             margin: 0;
-            padding: 20px;
+            padding: 24px;
+            line-height: 1.5;
         }
 
-        .container {
-            max-width: 1200px;
+        .dashboard-container {
+            max-width: 1400px;
             margin: 0 auto;
         }
 
         header {
-            text-align: center;
-            margin-bottom: 30px;
-            border-bottom: 1px solid #334155;
-            padding-bottom: 20px;
-        }
-
-        h1 { margin-bottom: 5px; color: var(--text-main); }
-        .subtitle { color: var(--text-muted); font-size: 0.95rem; }
-
-        /* Stats Grid */
-        .stats-banner {
-            display: grid;
-            grid-template-columns: repeat(auto-fit, minmax(220px, 1fr));
-            gap: 15px;
-            margin-bottom: 30px;
-        }
-
-        .stat-card {
-            background-color: var(--card-bg);
-            padding: 15px;
-            border-radius: 8px;
-            text-align: center;
-            border: 1px solid #334155;
-        }
-
-        .stat-val { font-size: 1.8rem; font-weight: bold; margin-top: 5px; }
-        .stat-val.up { color: var(--primary-green); }
-        .stat-val.down { color: var(--primary-red); }
-
-        /* Playbook Grid */
-        .playbook-grid {
-            display: grid;
-            grid-template-columns: repeat(auto-fit, minmax(320px, 1fr));
-            gap: 20px;
-        }
-
-        .month-card {
-            background-color: var(--card-bg);
-            border-radius: 10px;
-            padding: 20px;
-            border: 1px solid #334155;
-            box-shadow: 0 4px 6px -1px rgb(0 0 0 / 0.1);
-        }
-
-        .month-header {
             display: flex;
             justify-content: space-between;
             align-items: center;
-            border-bottom: 1px solid #334155;
-            padding-bottom: 10px;
-            margin-bottom: 15px;
+            border-bottom: 1px solid var(--border);
+            padding-bottom: 20px;
+            margin-bottom: 24px;
         }
 
-        .month-title { font-size: 1.25rem; font-weight: bold; color: var(--accent-blue); }
-        .historical-tag { font-size: 0.75rem; color: var(--text-muted); background: #0f172a; padding: 3px 8px; border-radius: 12px; }
+        h1 { margin: 0; font-size: 1.75rem; font-weight: 700; }
+        .subtitle { color: var(--text-muted); margin: 4px 0 0 0; font-size: 0.9rem; }
 
-        .action-row {
+        /* Multi-Column Layout */
+        .layout-grid {
+            display: grid;
+            grid-template-columns: 1fr;
+            gap: 24px;
+        }
+
+        @media (min-width: 1024px) {
+            .layout-grid {
+                grid-template-columns: 280px 1fr;
+            }
+        }
+
+        /* Sidebar Toolkit */
+        .sidebar {
+            display: flex;
+            flex-direction: column;
+            gap: 24px;
+        }
+
+        .panel {
+            background-color: var(--bg-card);
+            border: 1px solid var(--border);
+            border-radius: 12px;
+            padding: 20px;
+        }
+
+        .panel-title {
+            font-size: 1rem;
+            font-weight: 600;
+            margin-top: 0;
+            margin-bottom: 16px;
             display: flex;
             align-items: center;
-            background: #0f172a;
+            gap: 8px;
+            border-bottom: 1px solid var(--border);
+            padding-bottom: 8px;
+        }
+
+        /* Risk Calculator Form Styles */
+        .form-group {
+            margin-bottom: 12px;
+        }
+
+        label {
+            display: block;
+            font-size: 0.8rem;
+            color: var(--text-muted);
+            margin-bottom: 4px;
+            text-transform: uppercase;
+            font-weight: 600;
+        }
+
+        input {
+            width: 100%;
+            background-color: var(--bg-input);
+            border: 1px solid var(--border);
+            color: var(--text-main);
+            padding: 8px 12px;
+            border-radius: 6px;
+            box-sizing: border-box;
+            font-size: 0.95rem;
+        }
+
+        input:focus {
+            outline: 1px solid var(--blue);
+        }
+
+        .calc-result {
+            background-color: var(--bg-main);
             padding: 12px;
             border-radius: 6px;
-            margin-bottom: 10px;
-            cursor: pointer;
-            transition: transform 0.2s;
+            margin-top: 16px;
+            border-left: 3px solid var(--blue);
         }
 
-        .action-row:hover { transform: translateX(3px); }
-
-        .checkbox-container {
-            position: relative;
-            margin-right: 12px;
+        .result-line {
             display: flex;
+            justify-content: space-between;
+            font-size: 0.85rem;
+            margin-bottom: 4px;
+        }
+        .result-line:last-child { margin-bottom: 0; }
+        .result-val { font-weight: bold; color: var(--text-main); }
+        .result-val.highlight { color: var(--green); font-size: 1.1rem; }
+
+        /* Playbook Steps Checklist */
+        .main-content {
+            display: flex;
+            flex-direction: column;
+            gap: 24px;
+        }
+
+        .matrix-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fill, minmax(340px, 1fr));
+            gap: 16px;
+        }
+
+        .strategy-card {
+            background-color: var(--bg-card);
+            border: 1px solid var(--border);
+            border-radius: 12px;
+            padding: 16px;
+            display: flex;
+            flex-direction: column;
+            justify-content: space-between;
+        }
+
+        .card-header {
+            display: flex;
+            justify-content: space-between;
             align-items: center;
+            margin-bottom: 12px;
         }
 
-        .checkbox-container input[type="checkbox"] {
-            width: 18px;
-            height: 18px;
-            cursor: pointer;
-            accent-color: var(--accent-blue);
-        }
-
-        .badge {
+        .month-name { font-weight: 700; font-size: 1.1rem; }
+        .stat-badge {
             font-size: 0.75rem;
-            font-weight: bold;
-            padding: 2px 6px;
-            border-radius: 4px;
-            margin-right: 10px;
-            text-transform: uppercase;
+            background-color: var(--bg-main);
+            padding: 2px 8px;
+            border-radius: 20px;
+            color: var(--text-muted);
+            border: 1px solid var(--border);
         }
 
-        .badge.buy { background-color: rgba(16, 185, 129, 0.2); color: var(--primary-green); }
-        .badge.sell { background-color: rgba(239, 68, 68, 0.2); color: var(--primary-red); }
-
-        .action-text { font-size: 0.9rem; flex-grow: 1; }
-        
-        /* Tracker Footer Counters */
-        .counter-box {
-            margin-top: 35px;
-            background: linear-gradient(135deg, #1e293b, #0f172a);
-            padding: 20px;
-            border-radius: 10px;
-            border: 1px solid var(--accent-blue);
+        .rule-box {
+            background-color: var(--bg-main);
+            border-radius: 6px;
+            padding: 10px 12px;
+            margin-bottom: 8px;
             display: flex;
-            justify-content: space-around;
-            align-items: center;
-            flex-wrap: wrap;
+            align-items: flex-start;
+            gap: 10px;
+            cursor: pointer;
+            user-select: none;
         }
-        .counter-item { text-align: center; margin: 10px; }
-        .counter-num { font-size: 2rem; font-weight: bold; color: var(--accent-blue); }
+
+        .rule-box input[type="checkbox"] {
+            width: 16px;
+            height: 16px;
+            margin-top: 2px;
+            cursor: pointer;
+            accent-color: var(--blue);
+            flex-shrink: 0;
+        }
+
+        .rule-content { font-size: 0.85rem; }
+        .rule-tag {
+            font-size: 0.7rem;
+            font-weight: bold;
+            text-transform: uppercase;
+            display: inline-block;
+            margin-bottom: 2px;
+        }
+        .rule-tag.buy { color: var(--green); }
+        .rule-tag.sell { color: var(--red); }
+        .rule-desc { color: var(--text-main); }
+        .rule-trigger { color: var(--text-muted); font-size: 0.75rem; margin-top: 2px; font-style: italic; }
+
+        /* Master Progress Counter */
+        .progress-bar-container {
+            background-color: var(--bg-input);
+            height: 6px;
+            border-radius: 3px;
+            width: 100%;
+            overflow: hidden;
+        }
+        .progress-bar-fill {
+            background-color: var(--green);
+            height: 100%;
+            width: 0%;
+            transition: width 0.3s ease;
+        }
+
+        .summary-stats {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            font-size: 0.85rem;
+            color: var(--text-muted);
+            margin-bottom: 6px;
+        }
     </style>
 </head>
 <body>
 
-<div class="container">
+<div class="dashboard-container">
     <header>
-        <h1>ETF Annual Trading Playbook</h1>
-        <p class="subtitle">Interactive checklist modeled from 5-Year historical trends (2021-2025)</p>
+        <div>
+            <h1>ETF Rule-Based Execution Playbook</h1>
+            <p class="subtitle">Systematic rules calculated from 5-Year historical trends (2021-2025)</p>
+        </div>
+        <div style="text-align: right;">
+            <div class="summary-stats">
+                <span>Playbook Compliance</span>
+                <span id="progress-text">0/24 Actions (0%)</span>
+            </div>
+            <div class="progress-bar-container" style="width: 200px;">
+                <div class="progress-bar-fill" id="progress-fill"></div>
+            </div>
+        </div>
     </header>
 
-    <div class="stats-banner">
-        <div class="stat-card">
-            <div>Avg Annual Trading Days</div>
-            <div class="stat-val">~252 Days</div>
-        </div>
-        <div class="stat-card">
-            <div>Historical Market Bias</div>
-            <div class="stat-val up">54.4% Up Days</div>
-        </div>
-        <div class="stat-card">
-            <div>Avg Green Days / Year</div>
-            <div class="stat-val up">~137 Days</div>
-        </div>
-        <div class="stat-card">
-            <div>Avg Red Days / Year</div>
-            <div class="stat-val down">~115 Days</div>
-        </div>
-    </div>
+    <div class="layout-grid">
+        <!-- Left Column: Tooling & Risk Engine -->
+        <div class="sidebar">
+            <!-- Execution Risk Calculator -->
+            <div class="panel">
+                <h3 class="panel-title">Position Sizing Engine</h3>
+                <div class="form-group">
+                    <label>Total Account Balance ($)</label>
+                    <input type="number" id="portfolio-size" value="10000" min="1">
+                </div>
+                <div class="form-group">
+                    <label>Max Portfolio Risk Max (%)</label>
+                    <input type="number" id="risk-pct" value="1" step="0.25" min="0.1">
+                </div>
+                <div class="form-group">
+                    <label>ETF Current Price ($)</label>
+                    <input type="number" id="etf-price" value="450" min="1">
+                </div>
+                <div class="form-group">
+                    <label>Systematic Stop Loss Price ($)</label>
+                    <input type="number" id="stop-price" value="435" min="1">
+                </div>
 
-    <div class="playbook-grid" id="playbook"></div>
+                <div class="calc-result">
+                    <div class="result-line">
+                        <span>Cash Risk Exposure:</span>
+                        <span class="result-val" id="cash-risk">$100.00</span>
+                    </div>
+                    <div class="result-line">
+                        <span>Risk Per Share:</span>
+                        <span class="result-val" id="risk-per-share">$15.00</span>
+                    </div>
+                    <div class="result-line" style="margin-top: 8px; border-top: 1px solid var(--border); padding-top: 8px;">
+                        <span>Target Position Size:</span>
+                        <span class="result-val highlight" id="shares-result">6 Shares</span>
+                    </div>
+                    <div class="result-line">
+                        <span>Total Capital Required:</span>
+                        <span class="result-val" id="total-capital">$2,700.00</span>
+                    </div>
+                </div>
+            </div>
 
-    <div class="counter-box">
-        <div class="counter-item">
-            <div>Total Playbook Steps Executed</div>
-            <div class="counter-num" id="total-count">0 / 24</div>
+            <!-- Dynamic Guide Panel -->
+            <div class="panel" style="font-size: 0.85rem; color: var(--text-muted);">
+                <h3 class="panel-title" style="color: var(--text-main);">Execution Criteria</h3>
+                <p>💡 <strong style="color: var(--text-main);">Rule Validation:</strong> Do not check execution targets based on emotion. Only check an action item when both the target date frame and its listed technical indicator triggers are completely satisfied.</p>
+                <p>📊 Over the trailing 5-year evaluation arc, strict mechanical execution of structural dips significantly mitigated drawdowns during market corrections.</p>
+            </div>
+        </div>
+
+        <!-- Right Column: Interactive Action Matrix -->
+        <div class="main-content">
+            <div class="matrix-grid" id="matrix"></div>
         </div>
     </div>
 </div>
 
 <script>
-    // Playbook definitions tracking general seasonal ETF historical traits
-    const playbookData = [
-        { month: "January", bias: "Up", buy: "Deploy new capital (Jan Effect)", sell: "Trim asset classes that over-performed in Q4" },
-        { month: "February", bias: "Down", buy: "Accumulate on mid-month weakness", sell: "Hedge dynamic gains before options expiration" },
-        { month: "March", bias: "Up", buy: "Reinvest dividends from quarter-end", sell: "Take profit on speculative runs before rebalancing" },
-        { month: "April", bias: "Up", buy: "Buy leading index/sector ETFs early", sell: "Sell laggards post tax-day liquidity drain" },
-        { month: "May", bias: "Down", buy: "Value/Dividend ETF defensive plays", sell: "Reduce high-beta exposure (Sell in May)" },
-        { month: "June", bias: "Neutral", buy: "Dollar cost average during tech reshuffles", sell: "Harvest small-cap profits near mid-year close" },
-        { month: "July", bias: "Up", buy: "Front-run positive earnings revisions", sell: "Scale back extended thematic growth ETFs" },
-        { month: "August", bias: "Down", buy: "Buy long-dated targets on low volume dips", sell: "Liquidate low liquidity tactical positions" },
-        { month: "September", bias: "Down", buy: "Aggressive entry point window (Historically Weak)", sell: "Execute risk-off asset conversions" },
-        { month: "October", bias: "Up", buy: "Accumulate at post-capitulation structural lows", sell: "Trim positions failing to push above 200-MA" },
-        { month: "November", bias: "Up", buy: "Ride momentum tracks; Year-end inflows", sell: "Exit underperforming thematic structural plays" },
-        { month: "December", bias: "Up", buy: "Add to tax-loss harvested assets", sell: "Lock in Santa Claus rally high profits" }
+    // System Strategy Arrays mapping structural mechanical actions
+    const playbookRules = [
+        { month: "January", upProb: "56%", buyRule: "Deploy capital allocations if ETF prints above 20-day EMA.", buyTrig: "Trigger: Jan 2nd - Jan 7th", sellRule: "Scale out of high-beta sectors if RSI exceeds 75.", sellTrig: "Trigger: Late month rebalancing" },
+        { month: "February", upProb: "43%", buyRule: "Accumulate units if asset tests lower Bollinger Band support.", buyTrig: "Trigger: Historical mid-month dip", sellRule: "Liquidate short tactical targets if price loses 50-day SMA.", sellTrig: "Trigger: Volatility spike protection" },
+        { month: "March", upProb: "54%", buyRule: "Reinvest quarterly distributions on immediate opening blocks.", buyTrig: "Trigger: Dividend capture windows", sellRule: "Take tactical profits if price stretches 5% above 50-day SMA.", sellTrig: "Trigger: Quarter-end profit locking" },
+        { month: "April", upProb: "56%", buyRule: "Pyramid into core indexes if price holds above 200-day tracking.", buyTrig: "Trigger: Early month momentum continuation", sellRule: "Trim overextended profiles if tax-day volume decelerates.", sellTrig: "Trigger: April 15th-18th liquidity pinch" },
+        { month: "May", upProb: "44%", buyRule: "Acquire consumer staples or dividend safe-havens on 3% drop.", buyTrig: "Trigger: Hedging inflows", sellRule: "Reduce total index equity exposure weight by 15%.", sellTrig: "Trigger: Sell in May volume drain" },
+        { month: "June", upProb: "50%", buyRule: "DCA into primary holdings if index hits neutral monthly support.", buyTrig: "Trigger: Mid-year rebalancing window", sellRule: "Trim assets that have gained more than 20% year-to-date.", sellTrig: "Trigger: June 20-25 profit audit" },
+        { month: "July", upProb: "56%", buyRule: "Build tech weights ahead of Q2 reporting if holding key channels.", buyTrig: "Trigger: Pre-earnings breakout runs", sellRule: "Exit trailing items if earnings surprise vectors print negative.", sellTrig: "Trigger: Disappointment immediate safety cut" },
+        { month: "August", upProb: "42%", buyRule: "Set passive limit orders at 50-day moving average horizontal.", buyTrig: "Trigger: Low-volume algorithmic flushes", sellRule: "Hedge remaining configurations using short sector instruments.", sellTrig: "Trigger: Q3 classic volume breakdown" },
+        { month: "September", upProb: "40%", buyRule: "Aggressive buy scale on a 5-7% index correction profile.", buyTrig: "Trigger: Historical annual floor opportunity", sellRule: "Strictly enforce risk parameters on all open margins.", sellTrig: "Trigger: Immediate stops execution" },
+        { month: "October", upProb: "55%", buyRule: "Establish definitive Q4 long positions on technical reversals.", buyTrig: "Trigger: Post-capitulation wedge breakouts", sellRule: "Sell positions rejecting off institutional 200-day resistance.", sellTrig: "Trigger: Moving average failure confirmation" },
+        { month: "November", upProb: "56%", buyRule: "Add weight to momentum sectors that break cleanly to new highs.", buyTrig: "Trigger: Institutional asset reallocation sweeps", sellRule: "Take profit if macro volume drops off sharply near Thanksgiving.", sellTrig: "Trigger: Holiday liquidity reduction tracking" },
+        { month: "December", upProb: "57%", buyRule: "Buy structural holdings hit by localized tax-loss selling cascades.", buyTrig: "Trigger: Dec 10th - 20th discount window", sellRule: "Scale back holdings on any extended Santa Claus rally patterns.", sellTrig: "Trigger: Last 3 days of annual trading" }
     ];
 
-    const gridEl = document.getElementById('playbook');
+    const matrixEl = document.getElementById('matrix');
 
-    playbookData.forEach((data, index) => {
+    // Build Interactive Rule Matrix Grid
+    playbookRules.forEach((rule, idx) => {
         const card = document.createElement('div');
-        card.className = 'month-card';
+        card.className = 'strategy-card';
         card.innerHTML = `
-            <div class="month-header">
-                <div class="month-title">${data.month}</div>
-                <div class="historical-tag">Bias: ${data.bias}</div>
+            <div class="card-header">
+                <span class="month-name">${rule.month}</span>
+                <span class="stat-badge">5y Up Ratio: ${rule.upProb}</span>
             </div>
             
-            <label class="action-row">
-                <div class="checkbox-container">
-                    <input type="checkbox" class="playbook-cb" data-id="${index}-buy">
+            <div class="rule-box" onclick="toggleRow(this)">
+                <input type="checkbox" class="rule-cb" data-key="${idx}-buy" onclick="event.stopPropagation(); updateGlobalMetrics();">
+                <div class="rule-content">
+                    <span class="rule-tag buy">Buy Execution</span>
+                    <div class="rule-desc">${rule.buyRule}</div>
+                    <div class="rule-trigger">${rule.buyTrig}</div>
                 </div>
-                <span class="badge buy">Buy</span>
-                <div class="action-text">${data.buy}</div>
-            </label>
+            </div>
 
-            <label class="action-row">
-                <div class="checkbox-container">
-                    <input type="checkbox" class="playbook-cb" data-id="${index}-sell">
+            <div class="rule-box" onclick="toggleRow(this)">
+                <input type="checkbox" class="rule-cb" data-key="${idx}-sell" onclick="event.stopPropagation(); updateGlobalMetrics();">
+                <div class="rule-content">
+                    <span class="rule-tag sell">Sell Execution</span>
+                    <div class="rule-desc">${rule.sellRule}</div>
+                    <div class="rule-trigger">${rule.sellTrig}</div>
                 </div>
-                <span class="badge sell">Sell</span>
-                <div class="action-text">${data.sell}</div>
-            </label>
+            </div>
         `;
-        gridEl.appendChild(card);
+        matrixEl.appendChild(card);
     });
 
-    // Score Counter Engine
-    const checkboxes = document.querySelectorAll('.playbook-cb');
-    const totalCountEl = document.getElementById('total-count');
-
-    function updateScore() {
-        const checkedCount = document.querySelectorAll('.playbook-cb:checked').length;
-        totalCountEl.innerText = `${checkedCount} / ${checkboxes.length}`;
+    // Handle container row clicking mechanics for seamless access
+    function toggleRow(element) {
+        const cb = element.querySelector('.rule-cb');
+        cb.checked = !cb.checked;
+        updateGlobalMetrics();
     }
 
-    checkboxes.forEach(cb => {
-        cb.addEventListener('change', updateScore);
+    // Mathematical Engine for Position Sizing Calculations
+    const portfolioSizeInp = document.getElementById('portfolio-size');
+    const riskPctInp = document.getElementById('risk-pct');
+    const etfPriceInp = document.getElementById('etf-price');
+    const stopPriceInp = document.getElementById('stop-price');
+
+    function calculateRiskModel() {
+        const portSize = parseFloat(portfolioSizeInp.value) || 0;
+        const riskPct = parseFloat(riskPctInp.value) || 0;
+        const price = parseFloat(etfPriceInp.value) || 0;
+        const stop = parseFloat(stopPriceInp.value) || 0;
+
+        const maxCashRisk = portSize * (riskPct / 100);
+        const perShareRisk = price - stop;
+
+        if (perShareRisk <= 0 || price <= 0) {
+            document.getElementById('shares-result').innerText = "0 Shares";
+            document.getElementById('total-capital').innerText = "$0.00";
+            document.getElementById('risk-per-share').innerText = "Stop must be below entry";
+            return;
+        }
+
+        const exactShares = Math.floor(maxCashRisk / perShareRisk);
+        const capitalRequired = exactShares * price;
+
+        document.getElementById('cash-risk').innerText = `$${maxCashRisk.toFixed(2)}`;
+        document.getElementById('risk-per-share').innerText = `$${perShareRisk.toFixed(2)}`;
+        document.getElementById('shares-result').innerText = `${exactShares} Shares`;
+        document.getElementById('total-capital').innerText = `$${capitalRequired.toFixed(2)}`;
+    }
+
+    // Local Storage Systems & Interface Metric Processing
+    function updateGlobalMetrics() {
+        const checkboxes = document.querySelectorAll('.rule-cb');
+        let checkedCount = 0;
+        
+        checkboxes.forEach(cb => {
+            const storageKey = cb.getAttribute('data-key');
+            localStorage.setItem(`playbook-${storageKey}`, cb.checked ? 'true' : 'false');
+            if(cb.checked) checkedCount++;
+        });
+
+        const pct = Math.round((checkedCount / checkboxes.length) * 100);
+        document.getElementById('progress-text').innerText = `${checkedCount}/${checkboxes.length} Actions (${pct}%)`;
+        document.getElementById('progress-fill').style.width = `${pct}%`;
+    }
+
+    function loadSavedStates() {
+        const checkboxes = document.querySelectorAll('.rule-cb');
+        checkboxes.forEach(cb => {
+            const storageKey = cb.getAttribute('data-key');
+            const savedState = localStorage.getItem(`playbook-${storageKey}`);
+            if(savedState === 'true') {
+                cb.checked = true;
+            }
+        });
+        updateGlobalMetrics();
+    }
+
+    // Attach Event Processing Drivers
+    [portfolioSizeInp, riskPctInp, etfPriceInp, stopPriceInp].forEach(input => {
+        input.addEventListener('input', calculateRiskModel);
     });
+
+    // Run System Setup initializations
+    window.onload = () => {
+        loadSavedStates();
+        calculateRiskModel();
+    };
 </script>
 
 </body>
