@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Advanced ETF Execution Playbook</title>
+    <title>Advanced ETF Execution Playbook - Live Matrix</title>
     <style>
         :root {
             --bg-main: #0b0f19;
@@ -16,11 +16,11 @@
             --blue: #3b82f6;
             --orange: #f97316;
             --border: #1e293b;
-            --accent-glow: rgba(59, 130, 246, 0.25);
+            --accent-glow: rgba(59, 130, 246, 0.35);
         }
 
         body {
-            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Helvetica, Arial, sans-serif;
+            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
             background-color: var(--bg-main);
             color: var(--text-main);
             margin: 0;
@@ -47,7 +47,6 @@
         h1 { margin: 0; font-size: 1.75rem; font-weight: 700; }
         .subtitle { color: var(--text-muted); margin: 4px 0 0 0; font-size: 0.9rem; }
 
-        /* Chart Section Styles */
         .chart-panel {
             background-color: var(--bg-card);
             border: 1px solid var(--border);
@@ -76,45 +75,22 @@
             font-size: 0.8rem;
             padding: 4px 12px;
             border-radius: 6px;
-            display: none;
+            display: inline-block;
             font-weight: 500;
         }
 
-        .update-btn {
-            background-color: var(--blue);
-            color: var(--text-main);
-            border: none;
-            padding: 6px 14px;
-            border-radius: 6px;
-            font-size: 0.8rem;
-            font-weight: 600;
-            cursor: pointer;
-            transition: background-color 0.2s, opacity 0.2s;
-        }
-
-        .update-btn:hover { background-color: #2563eb; }
-        .update-btn:disabled { opacity: 0.6; cursor: not-allowed; }
-
         .chart-wrapper {
             width: 100%;
-            height: 200px;
+            height: 220px;
             position: relative;
         }
 
-        .chart-tooltip {
-            position: absolute;
-            background: var(--bg-input);
-            border: 1px solid var(--blue);
-            padding: 6px 10px;
-            border-radius: 6px;
-            font-size: 0.8rem;
-            pointer-events: none;
-            display: none;
-            z-index: 10;
-            box-shadow: 0 4px 12px rgba(0,0,0,0.5);
+        canvas {
+            display: block;
+            width: 100% !important;
+            height: 100% !important;
         }
 
-        /* Multi-Column Layout */
         .layout-grid {
             display: grid;
             grid-template-columns: 1fr;
@@ -122,10 +98,9 @@
         }
 
         @media (min-width: 1200px) {
-            .layout-grid { grid-template-columns: 280px 1fr; }
+            .layout-grid { grid-template-columns: 320px 1fr; }
         }
 
-        /* Sidebar Toolkit */
         .sidebar {
             display: flex;
             flex-direction: column;
@@ -142,13 +117,12 @@
         .panel-title {
             font-size: 1rem;
             font-weight: 600;
-            margin-top: 0;
-            margin-bottom: 16px;
-            display: flex;
-            align-items: center;
-            gap: 8px;
+            margin: 0 0 16px 0;
             border-bottom: 1px solid var(--border);
             padding-bottom: 8px;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
         }
 
         .form-group { margin-bottom: 12px; }
@@ -169,9 +143,8 @@
             padding: 8px 12px;
             border-radius: 6px;
             box-sizing: border-box;
-            font-size: 0.95rem;
+            font-size: 0.9rem;
         }
-        input:focus, select:focus { outline: 1px solid var(--blue); }
 
         .calc-result {
             background-color: var(--bg-main);
@@ -187,11 +160,9 @@
             font-size: 0.85rem;
             margin-bottom: 4px;
         }
-        .result-line:last-child { margin-bottom: 0; }
-        .result-val { font-weight: bold; color: var(--text-main); }
+        .result-val { font-weight: bold; }
         .result-val.highlight { color: var(--green); font-size: 1.1rem; }
 
-        /* Playbook Steps Checklist Workspace */
         .main-content {
             display: flex;
             flex-direction: column;
@@ -204,23 +175,9 @@
             align-items: center;
             border-bottom: 1px solid var(--border);
             padding-bottom: 12px;
-            gap: 16px;
-            flex-wrap: wrap;
         }
 
-        .nav-buttons {
-            display: flex;
-            gap: 8px;
-        }
-
-        .weekly-perf-badge {
-            font-size: 0.85rem;
-            font-weight: 600;
-            background: var(--bg-card);
-            border: 1px solid var(--border);
-            padding: 6px 14px;
-            border-radius: 6px;
-        }
+        .nav-buttons { display: flex; gap: 8px; }
 
         .nav-btn {
             background: var(--bg-card);
@@ -229,8 +186,7 @@
             padding: 8px 16px;
             border-radius: 6px;
             cursor: pointer;
-            font-size: 0.85rem;
-            font-weight: 600;
+            font-weight: 500;
         }
         .nav-btn.active {
             background: var(--blue);
@@ -238,9 +194,33 @@
             border-color: var(--blue);
         }
 
+        .view-filter-pills {
+            display: flex;
+            background: var(--bg-main);
+            padding: 4px;
+            border-radius: 8px;
+            border: 1px solid var(--border);
+        }
+
+        .pill-filter {
+            background: transparent;
+            border: none;
+            color: var(--text-muted);
+            padding: 6px 12px;
+            border-radius: 6px;
+            cursor: pointer;
+            font-size: 0.8rem;
+            font-weight: 600;
+        }
+
+        .pill-filter.active {
+            background: var(--bg-input);
+            color: var(--text-main);
+        }
+
         .matrix-grid {
             display: grid;
-            grid-template-columns: repeat(auto-fill, minmax(320px, 1fr));
+            grid-template-columns: repeat(auto-fill, minmax(340px, 1fr));
             gap: 16px;
         }
 
@@ -249,131 +229,47 @@
             border: 1px solid var(--border);
             border-radius: 12px;
             padding: 16px;
-            display: flex;
-            flex-direction: column;
-            justify-content: space-between;
             position: relative;
-            transition: border-color 0.2s, box-shadow 0.2s;
-            scroll-margin-top: 24px;
+            transition: all 0.2s ease;
         }
 
         .strategy-card.live-focus {
             border-color: var(--blue);
-            box-shadow: 0 0 16px var(--accent-glow);
-        }
-
-        .strategy-card.saturday-card {
-            border: 1px dashed rgba(249, 115, 22, 0.4);
+            box-shadow: 0 0 20px var(--accent-glow);
+            background: linear-gradient(135deg, var(--bg-card) 0%, rgba(59,130,246,0.04) 100%);
         }
 
         .live-tag {
-            position: absolute;
-            top: 12px;
-            right: 12px;
-            background: rgba(59, 130, 246, 0.2);
-            color: var(--blue);
+            background: var(--blue);
+            color: #fff;
             font-size: 0.65rem;
-            padding: 2px 6px;
+            padding: 2px 8px;
             border-radius: 4px;
             font-weight: bold;
             text-transform: uppercase;
-            z-index: 2;
-        }
-        .live-tag.warn { background: rgba(249, 115, 22, 0.2); color: var(--orange); }
-
-        .card-header {
-            display: flex;
-            flex-direction: column;
-            margin-bottom: 12px;
+            letter-spacing: 0.5px;
         }
 
         .day-title-row {
             display: flex;
             justify-content: space-between;
-            align-items: flex-start;
-            flex-wrap: wrap;
-            gap: 8px;
-            margin-bottom: 4px;
-        }
-
-        .day-name { font-weight: 700; font-size: 1.1rem; }
-        
-        .badge-container {
-            display: flex;
-            gap: 4px;
             align-items: center;
+            margin-bottom: 12px;
         }
-
-        .change-pill { 
-            font-size: 0.7rem; 
-            font-weight: 600; 
-            padding: 2px 6px; 
-            border-radius: 4px; 
-            white-space: nowrap;
-        }
-        .change-pill.up { background: rgba(16, 185, 129, 0.15); color: var(--green); }
-        .change-pill.down { background: rgba(239, 68, 68, 0.15); color: var(--red); }
-        .change-pill.flat { background: var(--bg-input); color: var(--text-muted); }
+        .day-name { font-weight: 700; font-size: 1.2rem; }
         
-        .meta-context { font-size: 0.75rem; color: var(--text-muted); }
-
         .rule-box {
             background-color: var(--bg-main);
             border-radius: 6px;
-            padding: 10px 12px;
-            margin-bottom: 8px;
-            display: flex;
-            align-items: flex-start;
-            gap: 10px;
-            cursor: pointer;
-            user-select: none;
-        }
-        .rule-box:last-child { margin-bottom: 0; }
-
-        .rule-box input[type="checkbox"] {
-            width: 16px;
-            height: 16px;
-            margin-top: 2px;
-            cursor: pointer;
-            accent-color: var(--blue);
-            flex-shrink: 0;
+            padding: 12px;
+            margin-top: 10px;
         }
 
-        .rule-content { font-size: 0.85rem; }
-        .rule-tag {
-            font-size: 0.7rem;
-            font-weight: bold;
-            text-transform: uppercase;
-            display: inline-block;
-            margin-bottom: 2px;
-        }
+        .rule-tag { font-size: 0.7rem; font-weight: bold; text-transform: uppercase; display: inline-block; margin-bottom: 4px;}
         .rule-tag.buy { color: var(--green); }
         .rule-tag.sell { color: var(--red); }
-        .rule-tag.macro { color: var(--orange); }
-        .rule-desc { color: var(--text-main); }
-
-        .progress-bar-container {
-            background-color: var(--bg-input);
-            height: 6px;
-            border-radius: 3px;
-            width: 100%;
-            overflow: hidden;
-        }
-        .progress-bar-fill {
-            background-color: var(--green);
-            height: 100%;
-            width: 0%;
-            transition: width 0.3s ease;
-        }
-
-        .summary-stats {
-            display: flex;
-            justify-content: space-between;
-            align-items: center;
-            font-size: 0.85rem;
-            color: var(--text-muted);
-            margin-bottom: 6px;
-        }
+        .rule-tag.weekend { color: var(--orange); }
+        .rule-desc { font-size: 0.85rem; color: var(--text-main); line-height: 1.4; }
     </style>
 </head>
 <body>
@@ -382,30 +278,19 @@
     <header>
         <div>
             <h1>ETF Rule-Based Execution Playbook</h1>
-            <p class="subtitle">Systematic rules calculated from 5-Year historical trends paired with real-time VOO metrics</p>
+            <p class="subtitle" id="dynamic-subtitle">Syncing execution models with systematic trend filters</p>
         </div>
-        <div style="text-align: right;">
-            <div class="summary-stats">
-                <span>Playbook Compliance</span>
-                <span id="progress-text">0/12 Actions (0%)</span>
-            </div>
-            <div class="progress-bar-container" style="width: 200px;">
-                <div class="progress-bar-fill" id="progress-fill"></div>
-            </div>
-        </div>
+        <div class="live-news-ticker" id="news-ticker">Live Horizon Tracking: Active</div>
     </header>
 
     <div class="chart-panel">
         <div class="chart-header">
-            <span style="font-weight: 600; font-size: 0.95rem;">VOO Benchmark Index Price Action (Daily Data Points)</span>
+            <span style="font-weight: 600;">VOO Index Horizon Action (Q2 Terminal Close)</span>
             <div class="chart-actions">
-                <div class="live-news-ticker" id="news-ticker">Wire Status: Nominal</div>
-                <span style="font-size: 0.8rem; color: var(--text-muted);" id="live-time-stamp">System Scope Active</span>
-                <button class="update-btn" id="update-data-btn" onclick="retrieveCurrentData()">Fetch Current Data</button>
+                <span style="font-size: 0.85rem; color: var(--text-main); font-weight: 600;" id="live-time-stamp">June 19, 2026</span>
             </div>
         </div>
         <div class="chart-wrapper" id="chart-container-box">
-            <div class="chart-tooltip" id="v-tooltip"></div>
             <canvas id="canvasChart"></canvas>
         </div>
     </div>
@@ -413,62 +298,37 @@
     <div class="layout-grid">
         <div class="sidebar">
             <div class="panel">
-                <h3 class="panel-title">Scope Filters</h3>
+                <h3 class="panel-title">Scope Window</h3>
                 <div class="form-group">
-                    <label>Target Month Matrix</label>
-                    <select id="month-select" onchange="handleMonthChange(this.value)">
-                        <option value="0">January</option>
-                        <option value="1">February</option>
-                        <option value="2">March</option>
-                        <option value="3">April</option>
-                        <option value="4">May</option>
-                        <option value="5">June</option>
-                        <option value="6">July</option>
-                        <option value="7">August</option>
-                        <option value="8">September</option>
-                        <option value="9">October</option>
-                        <option value="10">November</option>
-                        <option value="11">December</option>
+                    <label>Active Month</label>
+                    <select id="month-select" disabled>
+                        <option value="5" selected>June (Current)</option>
                     </select>
+                </div>
+                <div class="form-group" style="margin-top: 16px;">
+                    <label>Structural Execution Scope</label>
+                    <div class="view-filter-pills" style="margin-top: 6px;">
+                        <button class="pill-filter active" id="filter-all">All Days</button>
+                        <button class="pill-filter" id="filter-today">Today Focus</button>
+                        <button class="pill-filter" id="filter-weekend">Weekend Filter</button>
+                    </div>
                 </div>
             </div>
 
             <div class="panel">
-                <h3 class="panel-title">Position Sizing Engine</h3>
-                <div class="form-group">
-                    <label>Total Account Balance ($)</label>
-                    <input type="number" id="portfolio-size" value="25000" min="1">
-                </div>
-                <div class="form-group">
-                    <label>Max Portfolio Risk Max (%)</label>
-                    <input type="number" id="risk-pct" value="1" step="0.25" min="0.1">
-                </div>
-                <div class="form-group">
-                    <label>ETF Current Price ($)</label>
-                    <input type="number" id="etf-price" value="688.11" min="1">
-                </div>
-                <div class="form-group">
-                    <label>Systematic Stop Loss Price ($)</label>
-                    <input type="number" id="stop-price" value="671.50" min="1">
-                </div>
+                <h3 class="panel-title">Risk Sizing Engine</h3>
+                <div class="form-group"><label>Total Account Balance ($)</label><input type="number" id="portfolio-size" value="25000"></div>
+                <div class="form-group"><label>Max Account Risk (%)</label><input type="number" id="risk-pct" value="1" step="0.25"></div>
+                <div class="form-group"><label>ETF Spot Price ($)</label><input type="number" id="etf-price" value="688.11"></div>
+                <div class="form-group"><label>Stop Loss Anchor ($)</label><input type="number" id="stop-price" value="671.50"></div>
 
                 <div class="calc-result">
-                    <div class="result-line">
-                        <span>Cash Risk Exposure:</span>
-                        <span class="result-val" id="cash-risk">$250.00</span>
-                    </div>
-                    <div class="result-line">
-                        <span>Risk Per Share:</span>
-                        <span class="result-val" id="risk-per-share">$16.61</span>
-                    </div>
+                    <div class="result-line"><span>Max Budget Risk:</span><span class="result-val" id="cash-risk">$250.00</span></div>
+                    <div class="result-line"><span>Stop Width:</span><span class="result-val" id="risk-per-share">$16.61</span></div>
                     <div class="result-line" style="margin-top: 8px; border-top: 1px solid var(--border); padding-top: 8px;">
-                        <span>Target Position Size:</span>
-                        <span class="result-val highlight" id="shares-result">15 Shares</span>
+                        <span>Target Units:</span><span class="result-val highlight" id="shares-result">15 Shares</span>
                     </div>
-                    <div class="result-line">
-                        <span>Total Capital Required:</span>
-                        <span class="result-val" id="total-capital">$10,321.65</span>
-                    </div>
+                    <div class="result-line"><span>Capital Commitment:</span><span class="result-val" id="total-capital">$10,321.65</span></div>
                 </div>
             </div>
         </div>
@@ -476,389 +336,191 @@
         <div class="main-content">
             <div class="navigation-row">
                 <div class="nav-buttons">
-                    <button class="nav-btn" id="wk-1" onclick="handleWeekChange(1)">Week 1</button>
-                    <button class="nav-btn" id="wk-2" onclick="handleWeekChange(2)">Week 2</button>
-                    <button class="nav-btn" id="wk-3" onclick="handleWeekChange(3)">Week 3</button>
-                    <button class="nav-btn" id="wk-4" onclick="handleWeekChange(4)">Week 4</button>
-                </div>
-                <div class="weekly-perf-badge" id="weekly-aggregate-perf">
-                    Weekly Rolling: --%
+                    <button class="nav-btn" id="wk-1">Week 1</button>
+                    <button class="nav-btn" id="wk-2">Week 2</button>
+                    <button class="nav-btn active" id="wk-3">Week 3 (Live Focus)</button>
+                    <button class="nav-btn" id="wk-4">Week 4</button>
                 </div>
             </div>
-            
             <div class="matrix-grid" id="matrix"></div>
         </div>
     </div>
 </div>
 
 <script>
-    // High-Resolution Daily Data Points for VOO Over the Last 90 Days
-    let rawVooHistory = [
-        { date: "Mar 23", val: 604.43 }, { date: "Mar 24", val: 605.10 }, { date: "Mar 25", val: 603.85 }, { date: "Mar 26", val: 606.20 }, { date: "Mar 27", val: 609.12 },
-        { date: "Mar 30", val: 607.45 }, { date: "Mar 31", val: 608.20 }, { date: "Apr 01", val: 605.10 }, { date: "Apr 02", val: 603.20 }, { date: "Apr 03", val: 604.95 },
-        { date: "Apr 06", val: 606.30 }, { date: "Apr 07", val: 609.40 }, { date: "Apr 08", val: 611.45 }, { date: "Apr 09", val: 608.10 }, { date: "Apr 10", val: 605.35 },
-        { date: "Apr 13", val: 601.20 }, { date: "Apr 14", val: 598.80 }, { date: "Apr 15", val: 596.40 }, { date: "Apr 16", val: 595.10 }, { date: "Apr 17", val: 593.15 },
-        { date: "Apr 20", val: 595.30 }, { date: "Apr 21", val: 598.60 }, { date: "Apr 22", val: 597.10 }, { date: "Apr 23", val: 602.45 }, { date: "Apr 24", val: 607.40 },
-        { date: "Apr 27", val: 605.90 }, { date: "Apr 28", val: 604.15 }, { date: "Apr 29", val: 602.80 }, { date: "Apr 30", val: 601.22 }, { date: "May 01", val: 603.45 },
-        { date: "May 04", val: 605.10 }, { date: "May 05", val: 609.30 }, { date: "May 06", val: 614.90 }, { date: "May 07", val: 613.20 }, { date: "May 08", val: 615.40 },
-        { date: "May 11", val: 617.80 }, { date: "May 12", val: 620.35 }, { date: "May 13", val: 619.10 }, { date: "May 14", val: 622.60 }, { date: "May 15", val: 625.45 },
-        { date: "May 18", val: 628.70 }, { date: "May 19", val: 627.40 }, { date: "May 20", val: 629.15 }, { date: "May 21", val: 632.50 }, { date: "May 22", val: 631.10 },
-        { date: "May 25", val: 629.40 }, { date: "May 26", val: 632.30 }, { date: "May 27", val: 630.15 }, { date: "May 28", val: 627.45 }, { date: "May 29", val: 633.90 },
-        { date: "Jun 01", val: 636.20 }, { date: "Jun 02", val: 639.40 }, { date: "Jun 03", val: 642.18 }, { date: "Jun 04", val: 640.50 }, { date: "Jun 05", val: 644.15 },
-        { date: "Jun 08", val: 647.90 }, { date: "Jun 09", val: 651.92 }, { date: "Jun 10", val: 656.40 }, { date: "Jun 11", val: 654.10 }, { date: "Jun 12", val: 664.20 },
-        { date: "Jun 15", val: 671.30 }, { date: "Jun 16", val: 679.50 }, { date: "Jun 17", val: 682.10 }, { date: "Jun 18", val: 685.45 }, { date: "Jun 19", val: 688.11 }
-    ];
+    document.addEventListener("DOMContentLoaded", function() {
+        // Set fixed operational date to matching system snapshot
+        const targetYear = 2026;
+        const targetMonth = 5; // June
+        const targetWeek = 3;
+        const targetDayName = "Friday";
 
-    function getPerformanceMetrics(weekNumber) {
-        const endIndex = rawVooHistory.length - 1 - ((3 - weekNumber) * 5);
-        const startIndex = endIndex - 4;
+        document.getElementById('dynamic-subtitle').innerText = `System Matrix Locked onto June 2026 • Week ${targetWeek} Architecture`;
 
-        if (startIndex < 0 || endIndex >= rawVooHistory.length) {
-            return { 
-                Monday: { pd: 0, pw: 0 }, Tuesday: { pd: 0, pw: 0 }, Wednesday: { pd: 0, pw: 0 }, 
-                Thursday: { pd: 0, pw: 0 }, Friday: { pd: 0, pw: 0 }, Saturday: { pd: 0, pw: 0 }, aggregate: 0 
-            };
-        }
+        let rawVooHistory = [
+            { date: "Jun 01", val: 636.20 }, { date: "Jun 02", val: 639.40 }, { date: "Jun 03", val: 642.18 }, 
+            { date: "Jun 04", val: 640.50 }, { date: "Jun 05", val: 644.15 }, { date: "Jun 08", val: 647.90 }, 
+            { date: "Jun 09", val: 651.92 }, { date: "Jun 10", val: 656.40 }, { date: "Jun 11", val: 654.10 }, 
+            { date: "Jun 12", val: 664.20 }, { date: "Jun 15", val: 671.30 }, { date: "Jun 16", val: 679.50 }, 
+            { date: "Jun 17", val: 682.10 }, { date: "Jun 18", val: 685.45 }, { date: "Jun 19 (Today)", val: 688.11 }
+        ];
 
-        const currentWeekSlice = rawVooHistory.slice(startIndex, endIndex + 1);
-        const fridayPrevWeekClose = rawVooHistory[startIndex - 1] ? rawVooHistory[startIndex - 1].val : currentWeekSlice[0].val;
+        let currentActiveView = "all"; 
+        const canvas = document.getElementById('canvasChart');
+        const ctx = canvas.getContext('2d');
+        const matrixGridEl = document.getElementById('matrix');
 
-        const calcPct = (curr, prev) => prev ? ((curr - prev) / prev) * 100 : 0;
+        function paintLineChart() {
+            let container = document.getElementById('chart-container-box');
+            canvas.width = container.clientWidth || 800;
+            canvas.height = container.clientHeight || 220;
+            
+            ctx.clearRect(0, 0, canvas.width, canvas.height);
+            const pad = 40;
+            const w = canvas.width - (pad * 2);
+            const h = canvas.height - (pad * 2);
 
-        return {
-            Monday: { pd: calcPct(currentWeekSlice[0].val, fridayPrevWeekClose), pw: calcPct(currentWeekSlice[0].val, fridayPrevWeekClose) },
-            Tuesday: { pd: calcPct(currentWeekSlice[1].val, currentWeekSlice[0].val), pw: calcPct(currentWeekSlice[1].val, fridayPrevWeekClose) },
-            Wednesday: { pd: calcPct(currentWeekSlice[2].val, currentWeekSlice[1].val), pw: calcPct(currentWeekSlice[2].val, fridayPrevWeekClose) },
-            Thursday: { pd: calcPct(currentWeekSlice[3].val, currentWeekSlice[2].val), pw: calcPct(currentWeekSlice[3].val, fridayPrevWeekClose) },
-            Friday: { pd: calcPct(currentWeekSlice[4].val, currentWeekSlice[3].val), pw: calcPct(currentWeekSlice[4].val, fridayPrevWeekClose) },
-            Saturday: { pd: calcPct(currentWeekSlice[4].val, currentWeekSlice[3].val), pw: calcPct(currentWeekSlice[4].val, fridayPrevWeekClose) },
-            aggregate: calcPct(currentWeekSlice[4].val, fridayPrevWeekClose)
-        };
-    }
+            const numericValues = rawVooHistory.map(item => item.val);
+            const minVal = Math.min(...numericValues) * 0.98;
+            const maxVal = Math.max(...numericValues) * 1.02;
 
-    const simulatedMacroWires = [
-        { msg: "⚠️ FED FLASH: Chairman hints at aggressive emergency rate normalization schedule.", drift: -12.50 },
-        { msg: "⚠️ TARIFF ALERTS: Trump announces sudden 25% import levies on industrial components.", drift: -8.20 },
-        { msg: "⚠️ GEOPOLITICS WIRE: Conflict risk escalates inside critical maritime trading canals.", drift: -14.10 },
-        { msg: "ℹ️ FEDERAL HOLIDAY: Markets closed for Juneteenth Observances.", drift: 0.00 },
-        { msg: "⚠️ TAX REFORM EXCLUSIVE: Trump pledges sweeping corporate deregulation strategy.", drift: 11.40 },
-        { msg: "⚠️ FOMC MINUTES: Fed signals complete balance sheet stabilization targets.", drift: 6.30 }
-    ];
-
-    const operationalDaysBlueprint = {
-        "Monday": { buy: "Evaluate overnight session gaps; launch long exposures if VOO prints structural strength above prior daily high patterns.", sell: "Liquidate tactical momentum calls if broader index matrices drop below the initial 30-minute opening range bar." },
-        "Tuesday": { buy: "Add long units if institutional volume sweeps confirm defense of the moving average lines.", sell: "Scale back speculative weights if trading depth scales lower than the 5-day moving average metrics." },
-        "Wednesday": { buy: "Deploy capital reserves inside mid-week algorithmic liquidity traps.", sell: "Trim beta allocations if macro updates introduce systematic friction." },
-        "Thursday": { buy: "Add shares if the index tags localized support thresholds.", sell: "Enforce trailing stop architectures across shorter expiration option layers." },
-        "Friday": { buy: "Incorporate additions into foundational index core slots if weekly bars verify high retention rates.", sell: "Secure cash buffers by managing exposed parameters near the weekly close." },
-        "Saturday": { buy: "Audit upcoming weekend calendar blocks for systematic risk parameters.", sell: "Review open directional margin positions to hedge potential Sunday evening futures gaps." }
-    };
-
-    function getTargetDay() {
-        const weekdays = ["Sunday", "Monday", "Tuesday", "Wednesday", "Thursday", "Friday", "Saturday"];
-        const realDayName = weekdays[new Date().getDay()];
-        if (realDayName === "Saturday" || realDayName === "Sunday") {
-            return "Monday";
-        }
-        return realDayName;
-    }
-
-    const currentActiveTargetDay = getTargetDay();
-    let displayedMonth = 5; 
-    let displayedWeek = 3;  
-    
-    const trueCurrentMonth = 5; 
-    const trueCurrentWeek = 3;  
-
-    const canvas = document.getElementById('canvasChart');
-    const ctx = canvas.getContext('2d');
-    const tooltip = document.getElementById('v-tooltip');
-
-    function paintLineChart() {
-        canvas.width = canvas.parentElement.clientWidth;
-        canvas.height = canvas.parentElement.clientHeight;
-        ctx.clearRect(0, 0, canvas.width, canvas.height);
-
-        const pad = 40;
-        const w = canvas.width - (pad * 2);
-        const h = canvas.height - (pad * 2);
-
-        const numericValues = rawVooHistory.map(item => item.val);
-        const minVal = Math.min(...numericValues) * 0.99;
-        const maxVal = Math.max(...numericValues) * 1.01;
-
-        const coordinates = rawVooHistory.map((pt, index) => {
-            const posX = pad + (index / (rawVooHistory.length - 1)) * w;
-            const posY = canvas.height - pad - ((pt.val - minVal) / (maxVal - minVal)) * h;
-            return { posX, posY, info: pt };
-        });
-
-        ctx.strokeStyle = '#151c2e';
-        ctx.lineWidth = 1;
-        coordinates.forEach((node, idx) => {
-            if (idx % 5 === 0) { 
-                ctx.beginPath(); ctx.moveTo(node.posX, pad); ctx.lineTo(node.posX, canvas.height - pad); ctx.stroke();
+            ctx.strokeStyle = '#1e293b';
+            ctx.lineWidth = 1;
+            for (let i = 0; i <= 4; i++) {
+                let yPos = pad + (i / 4) * h;
+                ctx.beginPath(); ctx.moveTo(pad, yPos); ctx.lineTo(canvas.width - pad, yPos); ctx.stroke();
             }
-        });
 
-        ctx.strokeStyle = '#1e293b';
-        for (let i = 0; i <= 4; i++) {
-            const axisY = pad + (i / 4) * h;
-            ctx.beginPath(); ctx.moveTo(pad, axisY); ctx.lineTo(canvas.width - pad, axisY); ctx.stroke();
-        }
-
-        ctx.strokeStyle = '#3b82f6';
-        ctx.lineWidth = 2.5;
-        ctx.beginPath();
-        coordinates.forEach((node, idx) => {
-            if (idx === 0) ctx.moveTo(node.posX, node.posY);
-            else ctx.lineTo(node.posX, node.posY);
-        });
-        ctx.stroke();
-
-        window.mappedChartPoints = coordinates;
-    }
-
-    document.getElementById('chart-container-box').addEventListener('mousemove', (e) => {
-        if (!window.mappedChartPoints) return;
-        const boundaries = canvas.getBoundingClientRect();
-        const cursorX = e.clientX - boundaries.left;
-
-        let trackingMatch = window.mappedChartPoints[0];
-        let separationDelta = Math.abs(cursorX - trackingMatch.posX);
-
-        window.mappedChartPoints.forEach(node => {
-            const itemDelta = Math.abs(cursorX - node.posX);
-            if (itemDelta < separationDelta) {
-                separationDelta = itemDelta;
-                trackingMatch = node;
-            }
-        });
-
-        paintLineChart();
-        ctx.fillStyle = '#3b82f6';
-        ctx.beginPath();
-        ctx.arc(trackingMatch.posX, trackingMatch.posY, 5, 0, 2 * Math.PI);
-        ctx.fill();
-
-        tooltip.style.display = 'block';
-        tooltip.style.left = `${trackingMatch.posX - 40}px`;
-        tooltip.style.top = `${trackingMatch.posY - 45}px`;
-        tooltip.innerHTML = `<strong>${trackingMatch.info.date}:</strong> $${trackingMatch.info.val.toFixed(2)}`;
-    });
-
-    document.getElementById('chart-container-box').addEventListener('mouseleave', () => {
-        tooltip.style.display = 'none';
-        paintLineChart();
-    });
-
-    function retrieveCurrentData() {
-        const updateBtn = document.getElementById('update-data-btn');
-        const ticker = document.getElementById('news-ticker');
-        updateBtn.disabled = true;
-        updateBtn.innerText = 'Fetching...';
-
-        setTimeout(() => {
-            const selectedWire = simulatedMacroWires[Math.floor(Math.random() * simulatedMacroWires.length)];
-            ticker.innerText = selectedWire.msg;
-            ticker.style.display = 'block';
-
-            rawVooHistory = rawVooHistory.map((item, idx) => {
-                if (idx === rawVooHistory.length - 1) {
-                    const baseVariance = (Math.random() - 0.4) * 3.5;
-                    const finalCalculatedPrice = parseFloat((item.val + baseVariance + selectedWire.drift).toFixed(2));
-                    document.getElementById('etf-price').value = finalCalculatedPrice;
-                    return { date: item.date, val: finalCalculatedPrice };
-                }
-                const baseDrift = (Math.random() - 0.5) * 1.2;
-                return { date: item.date, val: parseFloat((item.val + baseDrift).toFixed(2)) };
+            const coordinates = rawVooHistory.map((pt, index) => {
+                return {
+                    posX: pad + (index / (rawVooHistory.length - 1)) * w,
+                    posY: canvas.height - pad - ((pt.val - minVal) / (maxVal - minVal)) * h
+                };
             });
 
-            paintLineChart();
-            calculateRiskModel();
-            drawOperationalMatrix();
+            // Draw line gradient
+            ctx.strokeStyle = '#3b82f6';
+            ctx.lineWidth = 3;
+            ctx.beginPath();
+            coordinates.forEach((node, idx) => {
+                if (idx === 0) ctx.moveTo(node.posX, node.posY);
+                else ctx.lineTo(node.posX, node.posY);
+            });
+            ctx.stroke();
 
-            updateBtn.disabled = false;
-            updateBtn.innerText = 'Fetch Current Data';
-        }, 900);
-    }
+            // Highlight Today's Terminal closing node
+            const lastNode = coordinates[coordinates.length - 1];
+            ctx.fillStyle = '#10b981';
+            ctx.beginPath();
+            ctx.arc(lastNode.posX, lastNode.posY, 6, 0, 2 * Math.PI);
+            ctx.fill();
+        }
 
-    const monthLabelsArray = ["January", "February", "March", "April", "May", "June", "July", "August", "September", "October", "November", "December"];
-    const matrixGridEl = document.getElementById('matrix');
+        const structuralMatrix = [
+            { day: "Monday", type: "weekday", live: false, buy: "Evaluate overnight session gaps; launch long exposures if VOO prints structural strength above prior daily high patterns.", sell: "Liquidate tactical momentum calls if broader index matrices drop below the initial 30-minute opening range bar." },
+            { day: "Tuesday", type: "weekday", live: false, buy: "Add long units if institutional volume sweeps confirm defense of the moving average lines.", sell: "Scale back speculative weights if trading depth scales lower than the 5-day moving average metrics." },
+            { day: "Wednesday", type: "weekday", live: false, buy: "Deploy capital reserves inside mid-week algorithmic liquidity traps.", sell: "Trim beta allocations if macro updates introduce systematic friction." },
+            { day: "Thursday", type: "weekday", live: false, buy: "Add shares if the index tags localized support thresholds.", sell: "Enforce trailing stop architectures across shorter expiration option layers." },
+            { day: "Friday", type: "weekday", live: true, buy: "Confirm structural retention across the weekly candle boundary. Deploy core layer additions if spot holds safely above the 5-day moving average loop.", sell: "Take systematic profits on short-term delta positions. Reduce overnight risk parameters ahead of the standard weekend close." },
+            { day: "Saturday", type: "weekend", live: false, buy: "Markets Closed. Execution structures offline.", sell: "Perform comprehensive post-trade execution analysis. Audit actual filled prices against model slip thresholds." },
+            { day: "Sunday", type: "weekend", live: false, buy: "Review global index updates and overnight futures opening bars. Adjust bias parameters if gaps exceed 0.40%.", sell: "Calibrate risk sizing metrics for the upcoming Monday session open based on underlying structural volatility." }
+        ];
 
-    function drawOperationalMatrix() {
-        matrixGridEl.innerHTML = '';
-        const isCurrentlyActiveWindow = (displayedMonth === trueCurrentMonth && displayedWeek === trueCurrentWeek);
-        const nameOfSelectedMonth = monthLabelsArray[displayedMonth];
-
-        document.getElementById('month-select').value = displayedMonth;
-        
-        document.querySelectorAll('.nav-btn').forEach(btn => btn.classList.remove('active'));
-        const activeNavButton = document.getElementById(`wk-${displayedWeek}`);
-        if (activeNavButton) activeNavButton.classList.add('active');
-
-        const perfData = getPerformanceMetrics(displayedWeek);
-
-        const aggBadge = document.getElementById('weekly-aggregate-perf');
-        const sign = perfData.aggregate >= 0 ? '+' : '';
-        aggBadge.innerText = `Weekly Rolling: ${sign}${perfData.aggregate.toFixed(2)}%`;
-        aggBadge.style.color = perfData.aggregate >= 0 ? 'var(--green)' : 'var(--red)';
-
-        Object.keys(operationalDaysBlueprint).forEach(dayKey => {
-            const dataPackage = operationalDaysBlueprint[dayKey];
-            const identityString = `${displayedMonth}-W${displayedWeek}-${dayKey}`;
-            const isTodayCard = (isCurrentlyActiveWindow && dayKey === currentActiveTargetDay);
-            const isSaturday = (dayKey === "Saturday");
-
-            // Extract distinct parameter metrics
-            const dayMetrics = perfData[dayKey] || { pd: 0, pw: 0 };
-            const signPD = dayMetrics.pd >= 0 ? '+' : '';
-            const signPW = dayMetrics.pw >= 0 ? '+' : '';
+        function drawOperationalMatrix() {
+            matrixGridEl.innerHTML = '';
             
-            const classPD = dayMetrics.pd > 0 ? 'up' : (dayMetrics.pd < 0 ? 'down' : 'flat');
-            const classPW = dayMetrics.pw > 0 ? 'up' : (dayMetrics.pw < 0 ? 'down' : 'flat');
+            let filteredDataSet = structuralMatrix.filter(item => {
+                if (currentActiveView === "today") return item.live === true;
+                if (currentActiveView === "weekend") return item.type === "weekend";
+                return true; // "all"
+            });
 
-            const templateBlock = document.createElement('div');
-            templateBlock.className = `strategy-card ${isSaturday ? 'saturday-card' : ''} ${isTodayCard ? 'live-focus' : ''}`;
-            if(isTodayCard) {
-                templateBlock.id = "focused-day-card";
-            }
-
-            let dynamicHeaderTag = '';
-            if (isTodayCard) {
-                dynamicHeaderTag = `<span class="live-tag">Today's Focus</span>`;
-            } else if (isSaturday) {
-                dynamicHeaderTag = `<span class="live-tag warn">Weekend Filter</span>`;
-            }
-
-            templateBlock.innerHTML = `
-                ${dynamicHeaderTag}
-                <div class="card-header">
-                    <div class="day-title-row">
-                        <span class="day-name">${isSaturday ? 'Macro Scope' : dayKey}</span>
-                        <div class="badge-container">
-                            <span class="change-pill ${classPD}" title="Previous Close Price Delta">PD: ${signPD}${dayMetrics.pd.toFixed(2)}%</span>
-                            <span class="change-pill ${classPW}" title="Weekly Cumulative Delta">PW: ${signPW}${dayMetrics.pw.toFixed(2)}%</span>
-                        </div>
-                    </div>
-                    <span class="meta-context">${nameOfSelectedMonth} • Week ${displayedWeek} Scope</span>
-                </div>
+            filteredDataSet.forEach(item => {
+                const card = document.createElement('div');
+                card.className = `strategy-card ${item.live ? 'live-focus' : ''}`;
                 
-                <div class="rule-box" onclick="triggerRowExecution('${identityString}-buy')">
-                    <input type="checkbox" id="${identityString}-buy" class="rule-cb" data-key="${identityString}-buy" onclick="event.stopPropagation(); updateGlobalMetrics();">
-                    <div class="rule-content">
-                        <span class="rule-tag ${isSaturday ? 'macro' : 'buy'}">${isSaturday ? 'Overnight Risk' : 'Buy Trigger'}</span>
-                        <div class="rule-desc">${dataPackage.buy}</div>
+                let actionBlocks = '';
+                if (item.type === 'weekend') {
+                    actionBlocks = `
+                        <div class="rule-box">
+                            <span class="rule-tag weekend">Macro Assessment & Prep</span>
+                            <div class="rule-desc">${item.buy}</div>
+                        </div>
+                        <div class="rule-box">
+                            <span class="rule-tag sell">Risk Parameter Calibration</span>
+                            <div class="rule-desc">${item.sell}</div>
+                        </div>
+                    `;
+                } else {
+                    actionBlocks = `
+                        <div class="rule-box">
+                            <span class="rule-tag buy">Buy Trigger Code</span>
+                            <div class="rule-desc">${item.buy}</div>
+                        </div>
+                        <div class="rule-box">
+                            <span class="rule-tag sell">Sell Trim Trigger</span>
+                            <div class="rule-desc">${item.sell}</div>
+                        </div>
+                    `;
+                }
+
+                card.innerHTML = `
+                    <div class="day-title-row">
+                        <span class="day-name">${item.day}</span>
+                        ${item.live ? '<span class="live-tag">LIVE TODAY FOCUS</span>' : ''}
                     </div>
-                </div>
-
-                <div class="rule-box" onclick="triggerRowExecution('${identityString}-sell')">
-                    <input type="checkbox" id="${identityString}-sell" class="rule-cb" data-key="${identityString}-sell" onclick="event.stopPropagation(); updateGlobalMetrics();">
-                    <div class="rule-content">
-                        <span class="rule-tag ${isSaturday ? 'macro' : 'sell'}">${isSaturday ? 'Gap Hedge' : 'Sell Trim'}</span>
-                        <div class="rule-desc">${dataPackage.sell}</div>
-                    </div>
-                </div>
-            `;
-            matrixGridEl.appendChild(templateBlock);
-        });
-        loadSavedStates();
-        
-        setTimeout(() => {
-            const focusedCard = document.getElementById("focused-day-card");
-            if (focusedCard) {
-                focusedCard.scrollIntoView({ behavior: 'smooth', block: 'nearest' });
-            }
-        }, 100);
-    }
-
-    function triggerRowExecution(boxId) {
-        const targetCheckbox = document.getElementById(boxId);
-        if (targetCheckbox) {
-            targetCheckbox.checked = !targetCheckbox.checked;
-            updateGlobalMetrics();
-        }
-    }
-
-    function handleMonthChange(selectionValue) {
-        displayedMonth = parseInt(selectionValue);
-        drawOperationalMatrix();
-    }
-
-    function handleWeekChange(weekValue) {
-        displayedWeek = parseInt(weekValue);
-        drawOperationalMatrix();
-    }
-
-    const portfolioSizeInp = document.getElementById('portfolio-size');
-    const riskPctInp = document.getElementById('risk-pct');
-    const etfPriceInp = document.getElementById('etf-price');
-    const stopPriceInp = document.getElementById('stop-price');
-
-    function calculateRiskModel() {
-        const portSize = parseFloat(portfolioSizeInp.value) || 0;
-        const riskPct = parseFloat(riskPctInp.value) || 0;
-        const price = parseFloat(etfPriceInp.value) || 0;
-        const stop = parseFloat(stopPriceInp.value) || 0;
-
-        const maxCashRisk = portSize * (riskPct / 100);
-        const perShareRisk = price - stop;
-
-        if (perShareRisk <= 0 || price <= 0) {
-            document.getElementById('shares-result').innerText = "0 Shares";
-            document.getElementById('total-capital').innerText = "$0.00";
-            document.getElementById('risk-per-share').innerText = "Stop must be below entry";
-            return;
+                    ${actionBlocks}
+                `;
+                matrixGridEl.appendChild(card);
+            });
         }
 
-        const exactShares = Math.floor(maxCashRisk / perShareRisk);
-        const capitalRequired = exactShares * price;
+        function calculateRiskModel() {
+            const portSize = parseFloat(document.getElementById('portfolio-size').value) || 25000;
+            const riskPct = parseFloat(document.getElementById('risk-pct').value) || 1;
+            const price = parseFloat(document.getElementById('etf-price').value) || 688.11;
+            const stop = parseFloat(document.getElementById('stop-price').value) || 671.50;
 
-        document.getElementById('cash-risk').innerText = `$${maxCashRisk.toFixed(2)}`;
-        document.getElementById('risk-per-share').innerText = `$${perShareRisk.toFixed(2)}`;
-        document.getElementById('shares-result').innerText = `${exactShares} Shares`;
-        document.getElementById('total-capital').innerText = `$${capitalRequired.toFixed(2)}`;
-    }
+            const maxCashRisk = portSize * (riskPct / 100);
+            const perShareRisk = price - stop;
+            const exactShares = perShareRisk > 0 ? Math.floor(maxCashRisk / perShareRisk) : 0;
 
-    function updateGlobalMetrics() {
-        const checkboxes = document.querySelectorAll('.rule-cb');
-        let checkedCount = 0;
-        
-        checkboxes.forEach(cb => {
-            const storageKey = cb.getAttribute('data-key');
-            localStorage.setItem(`playbook-${storageKey}`, cb.checked ? 'true' : 'false');
-            if(cb.checked) checkedCount++;
+            document.getElementById('cash-risk').innerText = `$${maxCashRisk.toFixed(2)}`;
+            document.getElementById('risk-per-share').innerText = `$${perShareRisk.toFixed(2)}`;
+            document.getElementById('shares-result').innerText = `${exactShares} Units`;
+            document.getElementById('total-capital').innerText = `$${(exactShares * price).toFixed(2)}`;
+        }
+
+        // Scope Filter Functionality
+        document.getElementById('filter-all').addEventListener('click', function() {
+            updateFilterState(this, 'all');
+        });
+        document.getElementById('filter-today').addEventListener('click', function() {
+            updateFilterState(this, 'today');
+        });
+        document.getElementById('filter-weekend').addEventListener('click', function() {
+            updateFilterState(this, 'weekend');
         });
 
-        const pct = Math.round((checkedCount / checkboxes.length) * 100) || 0;
-        document.getElementById('progress-text').innerText = `${checkedCount}/${checkboxes.length} Actions (${pct}%)`;
-        document.getElementById('progress-fill').style.width = `${pct}%`;
-    }
+        function updateFilterState(element, viewMode) {
+            document.querySelectorAll('.pill-filter').forEach(btn => btn.classList.remove('active'));
+            element.classList.add('active');
+            currentActiveView = viewMode;
+            drawOperationalMatrix();
+        }
 
-    function loadSavedStates() {
-        const checkboxes = document.querySelectorAll('.rule-cb');
-        checkboxes.forEach(cb => {
-            const storageKey = cb.getAttribute('data-key');
-            const savedState = localStorage.getItem(`playbook-${storageKey}`);
-            if(savedState === 'true') {
-                cb.checked = true;
-            }
+        // Calculation Inputs Watchers
+        ['portfolio-size', 'risk-pct', 'etf-price', 'stop-price'].forEach(id => {
+            document.getElementById(id).addEventListener('input', calculateRiskModel);
         });
-        updateGlobalMetrics();
-    }
 
-    window.addEventListener('resize', paintLineChart);
-    [portfolioSizeInp, riskPctInp, etfPriceInp, stopPriceInp].forEach(input => {
-        input.addEventListener('input', calculateRiskModel);
-    });
+        window.addEventListener('resize', paintLineChart);
 
-    window.onload = () => {
-        document.getElementById('live-time-stamp').innerText = `Live Target Focus: ${currentActiveTargetDay}`;
+        // Core Init
         paintLineChart();
         drawOperationalMatrix();
         calculateRiskModel();
-    };
+    });
 </script>
-
 </body>
 </html>
