@@ -204,6 +204,8 @@
             align-items: center;
             border-bottom: 1px solid var(--border);
             padding-bottom: 12px;
+            gap: 16px;
+            flex-wrap: wrap;
         }
 
         .nav-buttons {
@@ -238,7 +240,7 @@
 
         .matrix-grid {
             display: grid;
-            grid-template-columns: repeat(auto-fill, minmax(300px, 1fr));
+            grid-template-columns: repeat(auto-fill, minmax(320px, 1fr));
             gap: 16px;
         }
 
@@ -275,6 +277,7 @@
             border-radius: 4px;
             font-weight: bold;
             text-transform: uppercase;
+            z-index: 2;
         }
         .live-tag.warn { background: rgba(249, 115, 22, 0.2); color: var(--orange); }
 
@@ -284,13 +287,35 @@
             margin-bottom: 12px;
         }
 
-        .day-name { font-weight: 700; font-size: 1.1rem; display: flex; align-items: center; justify-content: space-between; }
-        .change-pill { font-size: 0.75rem; font-weight: 600; padding: 2px 6px; border-radius: 4px; }
+        .day-title-row {
+            display: flex;
+            justify-content: space-between;
+            align-items: flex-start;
+            flex-wrap: wrap;
+            gap: 8px;
+            margin-bottom: 4px;
+        }
+
+        .day-name { font-weight: 700; font-size: 1.1rem; }
+        
+        .badge-container {
+            display: flex;
+            gap: 4px;
+            align-items: center;
+        }
+
+        .change-pill { 
+            font-size: 0.7rem; 
+            font-weight: 600; 
+            padding: 2px 6px; 
+            border-radius: 4px; 
+            white-space: nowrap;
+        }
         .change-pill.up { background: rgba(16, 185, 129, 0.15); color: var(--green); }
         .change-pill.down { background: rgba(239, 68, 68, 0.15); color: var(--red); }
         .change-pill.flat { background: var(--bg-input); color: var(--text-muted); }
         
-        .meta-context { font-size: 0.75rem; color: var(--text-muted); margin-top: 2px; }
+        .meta-context { font-size: 0.75rem; color: var(--text-muted); }
 
         .rule-box {
             background-color: var(--bg-main);
@@ -484,13 +509,15 @@
         { date: "Jun 15", val: 671.30 }, { date: "Jun 16", val: 679.50 }, { date: "Jun 17", val: 682.10 }, { date: "Jun 18", val: 685.45 }, { date: "Jun 19", val: 688.11 }
     ];
 
-    // Sub-indexes to parse historical array back down into 5-day blocks dynamically
     function getPerformanceMetrics(weekNumber) {
         const endIndex = rawVooHistory.length - 1 - ((3 - weekNumber) * 5);
         const startIndex = endIndex - 4;
 
         if (startIndex < 0 || endIndex >= rawVooHistory.length) {
-            return { Monday: 0, Tuesday: 0, Wednesday: 0, Thursday: 0, Friday: 0, Saturday: 0, aggregate: 0 };
+            return { 
+                Monday: { pd: 0, pw: 0 }, Tuesday: { pd: 0, pw: 0 }, Wednesday: { pd: 0, pw: 0 }, 
+                Thursday: { pd: 0, pw: 0 }, Friday: { pd: 0, pw: 0 }, Saturday: { pd: 0, pw: 0 }, aggregate: 0 
+            };
         }
 
         const currentWeekSlice = rawVooHistory.slice(startIndex, endIndex + 1);
@@ -498,17 +525,15 @@
 
         const calcPct = (curr, prev) => prev ? ((curr - prev) / prev) * 100 : 0;
 
-        const results = {
-            Monday: calcPct(currentWeekSlice[0].val, fridayPrevWeekClose),
-            Tuesday: calcPct(currentWeekSlice[1].val, currentWeekSlice[0].val),
-            Wednesday: calcPct(currentWeekSlice[2].val, currentWeekSlice[1].val),
-            Thursday: calcPct(currentWeekSlice[3].val, currentWeekSlice[2].val),
-            Friday: calcPct(currentWeekSlice[4].val, currentWeekSlice[3].val),
-            Saturday: calcPct(currentWeekSlice[4].val, fridayPrevWeekClose), // Weekend risk benchmark
+        return {
+            Monday: { pd: calcPct(currentWeekSlice[0].val, fridayPrevWeekClose), pw: calcPct(currentWeekSlice[0].val, fridayPrevWeekClose) },
+            Tuesday: { pd: calcPct(currentWeekSlice[1].val, currentWeekSlice[0].val), pw: calcPct(currentWeekSlice[1].val, fridayPrevWeekClose) },
+            Wednesday: { pd: calcPct(currentWeekSlice[2].val, currentWeekSlice[1].val), pw: calcPct(currentWeekSlice[2].val, fridayPrevWeekClose) },
+            Thursday: { pd: calcPct(currentWeekSlice[3].val, currentWeekSlice[2].val), pw: calcPct(currentWeekSlice[3].val, fridayPrevWeekClose) },
+            Friday: { pd: calcPct(currentWeekSlice[4].val, currentWeekSlice[3].val), pw: calcPct(currentWeekSlice[4].val, fridayPrevWeekClose) },
+            Saturday: { pd: calcPct(currentWeekSlice[4].val, currentWeekSlice[3].val), pw: calcPct(currentWeekSlice[4].val, fridayPrevWeekClose) },
             aggregate: calcPct(currentWeekSlice[4].val, fridayPrevWeekClose)
         };
-
-        return results;
     }
 
     const simulatedMacroWires = [
@@ -672,10 +697,8 @@
         const activeNavButton = document.getElementById(`wk-${displayedWeek}`);
         if (activeNavButton) activeNavButton.classList.add('active');
 
-        // Fetch percentage delta blocks based on selected week
         const perfData = getPerformanceMetrics(displayedWeek);
 
-        // Render aggregate badge
         const aggBadge = document.getElementById('weekly-aggregate-perf');
         const sign = perfData.aggregate >= 0 ? '+' : '';
         aggBadge.innerText = `Weekly Rolling: ${sign}${perfData.aggregate.toFixed(2)}%`;
@@ -687,9 +710,13 @@
             const isTodayCard = (isCurrentlyActiveWindow && dayKey === currentActiveTargetDay);
             const isSaturday = (dayKey === "Saturday");
 
-            const dailyDelta = perfData[dayKey] || 0;
-            const deltaSign = dailyDelta >= 0 ? '+' : '';
-            const deltaClass = dailyDelta > 0 ? 'up' : (dailyDelta < 0 ? 'down' : 'flat');
+            // Extract distinct parameter metrics
+            const dayMetrics = perfData[dayKey] || { pd: 0, pw: 0 };
+            const signPD = dayMetrics.pd >= 0 ? '+' : '';
+            const signPW = dayMetrics.pw >= 0 ? '+' : '';
+            
+            const classPD = dayMetrics.pd > 0 ? 'up' : (dayMetrics.pd < 0 ? 'down' : 'flat');
+            const classPW = dayMetrics.pw > 0 ? 'up' : (dayMetrics.pw < 0 ? 'down' : 'flat');
 
             const templateBlock = document.createElement('div');
             templateBlock.className = `strategy-card ${isSaturday ? 'saturday-card' : ''} ${isTodayCard ? 'live-focus' : ''}`;
@@ -707,10 +734,13 @@
             templateBlock.innerHTML = `
                 ${dynamicHeaderTag}
                 <div class="card-header">
-                    <span class="day-name">
-                        <span>${isSaturday ? 'Macro Scope (Sat)' : dayKey}</span>
-                        <span class="change-pill ${deltaClass}">${deltaSign}${dailyDelta.toFixed(2)}%</span>
-                    </span>
+                    <div class="day-title-row">
+                        <span class="day-name">${isSaturday ? 'Macro Scope' : dayKey}</span>
+                        <div class="badge-container">
+                            <span class="change-pill ${classPD}" title="Previous Close Price Delta">PD: ${signPD}${dayMetrics.pd.toFixed(2)}%</span>
+                            <span class="change-pill ${classPW}" title="Weekly Cumulative Delta">PW: ${signPW}${dayMetrics.pw.toFixed(2)}%</span>
+                        </div>
+                    </div>
                     <span class="meta-context">${nameOfSelectedMonth} • Week ${displayedWeek} Scope</span>
                 </div>
                 
