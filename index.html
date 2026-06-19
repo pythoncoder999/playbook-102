@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Advanced ETF Execution Playbook - Live Matrix</title>
+    <title>Advanced ETF Execution Playbook</title>
     <style>
         :root {
             --bg-main: #0b0f19;
@@ -16,7 +16,7 @@
             --blue: #3b82f6;
             --orange: #f97316;
             --border: #1e293b;
-            --accent-glow: rgba(59, 130, 246, 0.35);
+            --accent-glow: rgba(59, 130, 246, 0.25);
         }
 
         body {
@@ -75,8 +75,19 @@
             font-size: 0.8rem;
             padding: 4px 12px;
             border-radius: 6px;
-            display: inline-block;
+            display: none;
             font-weight: 500;
+        }
+
+        .update-btn {
+            background-color: var(--blue);
+            color: var(--text-main);
+            border: none;
+            padding: 6px 14px;
+            border-radius: 6px;
+            font-size: 0.8rem;
+            font-weight: 600;
+            cursor: pointer;
         }
 
         .chart-wrapper {
@@ -91,6 +102,18 @@
             height: 100% !important;
         }
 
+        .chart-tooltip {
+            position: absolute;
+            background: var(--bg-input);
+            border: 1px solid var(--blue);
+            padding: 6px 10px;
+            border-radius: 6px;
+            font-size: 0.8rem;
+            pointer-events: none;
+            display: none;
+            z-index: 10;
+        }
+
         .layout-grid {
             display: grid;
             grid-template-columns: 1fr;
@@ -98,7 +121,7 @@
         }
 
         @media (min-width: 1200px) {
-            .layout-grid { grid-template-columns: 320px 1fr; }
+            .layout-grid { grid-template-columns: 280px 1fr; }
         }
 
         .sidebar {
@@ -120,9 +143,6 @@
             margin: 0 0 16px 0;
             border-bottom: 1px solid var(--border);
             padding-bottom: 8px;
-            display: flex;
-            justify-content: space-between;
-            align-items: center;
         }
 
         .form-group { margin-bottom: 12px; }
@@ -143,7 +163,6 @@
             padding: 8px 12px;
             border-radius: 6px;
             box-sizing: border-box;
-            font-size: 0.9rem;
         }
 
         .calc-result {
@@ -179,6 +198,15 @@
 
         .nav-buttons { display: flex; gap: 8px; }
 
+        .weekly-perf-badge {
+            font-size: 0.85rem;
+            font-weight: 600;
+            background: var(--bg-card);
+            border: 1px solid var(--border);
+            padding: 6px 14px;
+            border-radius: 6px;
+        }
+
         .nav-btn {
             background: var(--bg-card);
             border: 1px solid var(--border);
@@ -186,7 +214,6 @@
             padding: 8px 16px;
             border-radius: 6px;
             cursor: pointer;
-            font-weight: 500;
         }
         .nav-btn.active {
             background: var(--blue);
@@ -194,33 +221,9 @@
             border-color: var(--blue);
         }
 
-        .view-filter-pills {
-            display: flex;
-            background: var(--bg-main);
-            padding: 4px;
-            border-radius: 8px;
-            border: 1px solid var(--border);
-        }
-
-        .pill-filter {
-            background: transparent;
-            border: none;
-            color: var(--text-muted);
-            padding: 6px 12px;
-            border-radius: 6px;
-            cursor: pointer;
-            font-size: 0.8rem;
-            font-weight: 600;
-        }
-
-        .pill-filter.active {
-            background: var(--bg-input);
-            color: var(--text-main);
-        }
-
         .matrix-grid {
             display: grid;
-            grid-template-columns: repeat(auto-fill, minmax(340px, 1fr));
+            grid-template-columns: repeat(auto-fill, minmax(320px, 1fr));
             gap: 16px;
         }
 
@@ -229,47 +232,59 @@
             border: 1px solid var(--border);
             border-radius: 12px;
             padding: 16px;
-            position: relative;
-            transition: all 0.2s ease;
         }
 
         .strategy-card.live-focus {
             border-color: var(--blue);
-            box-shadow: 0 0 20px var(--accent-glow);
-            background: linear-gradient(135deg, var(--bg-card) 0%, rgba(59,130,246,0.04) 100%);
+            box-shadow: 0 0 16px var(--accent-glow);
         }
 
+        .tag-row { margin-bottom: 8px; }
         .live-tag {
-            background: var(--blue);
-            color: #fff;
+            background: rgba(59, 130, 246, 0.2);
+            color: var(--blue);
             font-size: 0.65rem;
-            padding: 2px 8px;
+            padding: 3px 8px;
             border-radius: 4px;
             font-weight: bold;
             text-transform: uppercase;
-            letter-spacing: 0.5px;
         }
 
         .day-title-row {
             display: flex;
             justify-content: space-between;
-            align-items: center;
-            margin-bottom: 12px;
+            margin-bottom: 4px;
         }
-        .day-name { font-weight: 700; font-size: 1.2rem; }
+        .day-name { font-weight: 700; font-size: 1.1rem; }
+        .change-pill { font-size: 0.7rem; padding: 2px 6px; border-radius: 4px; }
+        .change-pill.up { background: rgba(16, 185, 129, 0.15); color: var(--green); }
+        .change-pill.down { background: rgba(239, 68, 68, 0.15); color: var(--red); }
         
+        .meta-context { font-size: 0.75rem; color: var(--text-muted); }
+
         .rule-box {
             background-color: var(--bg-main);
             border-radius: 6px;
-            padding: 12px;
+            padding: 10px 12px;
             margin-top: 10px;
+            display: flex;
+            gap: 10px;
         }
 
-        .rule-tag { font-size: 0.7rem; font-weight: bold; text-transform: uppercase; display: inline-block; margin-bottom: 4px;}
+        .rule-tag { font-size: 0.7rem; font-weight: bold; text-transform: uppercase; }
         .rule-tag.buy { color: var(--green); }
         .rule-tag.sell { color: var(--red); }
-        .rule-tag.weekend { color: var(--orange); }
-        .rule-desc { font-size: 0.85rem; color: var(--text-main); line-height: 1.4; }
+        .rule-desc { font-size: 0.85rem; color: var(--text-main); margin-top: 2px; }
+
+        .progress-bar-container {
+            background-color: var(--bg-input);
+            height: 6px;
+            border-radius: 3px;
+            width: 200px;
+            overflow: hidden;
+        }
+        .progress-bar-fill { background-color: var(--green); height: 100%; width: 0%; transition: width 0.3s; }
+        .summary-stats { font-size: 0.85rem; color: var(--text-muted); margin-bottom: 4px; text-align: right;}
     </style>
 </head>
 <body>
@@ -278,19 +293,29 @@
     <header>
         <div>
             <h1>ETF Rule-Based Execution Playbook</h1>
-            <p class="subtitle" id="dynamic-subtitle">Syncing execution models with systematic trend filters</p>
+            <p class="subtitle">Systematic rules calculated from 5-Year historical trends paired with real-time VOO metrics</p>
         </div>
-        <div class="live-news-ticker" id="news-ticker">Live Horizon Tracking: Active</div>
+        <div>
+            <div class="summary-stats">
+                <span id="progress-text">0/12 Actions (0%)</span>
+            </div>
+            <div class="progress-bar-container">
+                <div class="progress-bar-fill" id="progress-fill"></div>
+            </div>
+        </div>
     </header>
 
     <div class="chart-panel">
         <div class="chart-header">
-            <span style="font-weight: 600;">VOO Index Horizon Action (Q2 Terminal Close)</span>
+            <span style="font-weight: 600;">VOO Benchmark Index Price Action</span>
             <div class="chart-actions">
-                <span style="font-size: 0.85rem; color: var(--text-main); font-weight: 600;" id="live-time-stamp">June 19, 2026</span>
+                <div class="live-news-ticker" id="news-ticker">Wire Status: Nominal</div>
+                <span style="font-size: 0.8rem; color: var(--text-muted);" id="live-time-stamp">System Scope Active</span>
+                <button class="update-btn" id="update-data-btn">Fetch Current Data</button>
             </div>
         </div>
         <div class="chart-wrapper" id="chart-container-box">
+            <div class="chart-tooltip" id="v-tooltip"></div>
             <canvas id="canvasChart"></canvas>
         </div>
     </div>
@@ -298,37 +323,40 @@
     <div class="layout-grid">
         <div class="sidebar">
             <div class="panel">
-                <h3 class="panel-title">Scope Window</h3>
+                <h3 class="panel-title">Scope Filters</h3>
                 <div class="form-group">
-                    <label>Active Month</label>
-                    <select id="month-select" disabled>
-                        <option value="5" selected>June (Current)</option>
+                    <label>Target Month Matrix</label>
+                    <select id="month-select">
+                        <option value="0">January</option>
+                        <option value="1">February</option>
+                        <option value="2">March</option>
+                        <option value="3">April</option>
+                        <option value="4">May</option>
+                        <option value="5" selected>June</option>
+                        <option value="6">July</option>
+                        <option value="7">August</option>
+                        <option value="8">September</option>
+                        <option value="9">October</option>
+                        <option value="10">November</option>
+                        <option value="11">December</option>
                     </select>
-                </div>
-                <div class="form-group" style="margin-top: 16px;">
-                    <label>Structural Execution Scope</label>
-                    <div class="view-filter-pills" style="margin-top: 6px;">
-                        <button class="pill-filter active" id="filter-all">All Days</button>
-                        <button class="pill-filter" id="filter-today">Today Focus</button>
-                        <button class="pill-filter" id="filter-weekend">Weekend Filter</button>
-                    </div>
                 </div>
             </div>
 
             <div class="panel">
-                <h3 class="panel-title">Risk Sizing Engine</h3>
+                <h3 class="panel-title">Position Sizing Engine</h3>
                 <div class="form-group"><label>Total Account Balance ($)</label><input type="number" id="portfolio-size" value="25000"></div>
-                <div class="form-group"><label>Max Account Risk (%)</label><input type="number" id="risk-pct" value="1" step="0.25"></div>
-                <div class="form-group"><label>ETF Spot Price ($)</label><input type="number" id="etf-price" value="688.11"></div>
-                <div class="form-group"><label>Stop Loss Anchor ($)</label><input type="number" id="stop-price" value="671.50"></div>
+                <div class="form-group"><label>Max Portfolio Risk (%)</label><input type="number" id="risk-pct" value="1" step="0.25"></div>
+                <div class="form-group"><label>ETF Current Price ($)</label><input type="number" id="etf-price" value="688.11"></div>
+                <div class="form-group"><label>Systematic Stop Loss Price ($)</label><input type="number" id="stop-price" value="671.50"></div>
 
                 <div class="calc-result">
-                    <div class="result-line"><span>Max Budget Risk:</span><span class="result-val" id="cash-risk">$250.00</span></div>
-                    <div class="result-line"><span>Stop Width:</span><span class="result-val" id="risk-per-share">$16.61</span></div>
+                    <div class="result-line"><span>Cash Risk Exposure:</span><span class="result-val" id="cash-risk">$250.00</span></div>
+                    <div class="result-line"><span>Risk Per Share:</span><span class="result-val" id="risk-per-share">$16.61</span></div>
                     <div class="result-line" style="margin-top: 8px; border-top: 1px solid var(--border); padding-top: 8px;">
-                        <span>Target Units:</span><span class="result-val highlight" id="shares-result">15 Shares</span>
+                        <span>Target Position Size:</span><span class="result-val highlight" id="shares-result">15 Shares</span>
                     </div>
-                    <div class="result-line"><span>Capital Commitment:</span><span class="result-val" id="total-capital">$10,321.65</span></div>
+                    <div class="result-line"><span>Total Capital Required:</span><span class="result-val" id="total-capital">$10,321.65</span></div>
                 </div>
             </div>
         </div>
@@ -338,9 +366,10 @@
                 <div class="nav-buttons">
                     <button class="nav-btn" id="wk-1">Week 1</button>
                     <button class="nav-btn" id="wk-2">Week 2</button>
-                    <button class="nav-btn active" id="wk-3">Week 3 (Live Focus)</button>
+                    <button class="nav-btn id="wk-3" class="nav-btn active">Week 3</button>
                     <button class="nav-btn" id="wk-4">Week 4</button>
                 </div>
+                <div class="weekly-perf-badge" id="weekly-aggregate-perf">Weekly Rolling: --%</div>
             </div>
             <div class="matrix-grid" id="matrix"></div>
         </div>
@@ -349,25 +378,26 @@
 
 <script>
     document.addEventListener("DOMContentLoaded", function() {
-        // Set fixed operational date to matching system snapshot
-        const targetYear = 2026;
-        const targetMonth = 5; // June
-        const targetWeek = 3;
-        const targetDayName = "Friday";
-
-        document.getElementById('dynamic-subtitle').innerText = `System Matrix Locked onto June 2026 • Week ${targetWeek} Architecture`;
-
         let rawVooHistory = [
-            { date: "Jun 01", val: 636.20 }, { date: "Jun 02", val: 639.40 }, { date: "Jun 03", val: 642.18 }, 
-            { date: "Jun 04", val: 640.50 }, { date: "Jun 05", val: 644.15 }, { date: "Jun 08", val: 647.90 }, 
-            { date: "Jun 09", val: 651.92 }, { date: "Jun 10", val: 656.40 }, { date: "Jun 11", val: 654.10 }, 
-            { date: "Jun 12", val: 664.20 }, { date: "Jun 15", val: 671.30 }, { date: "Jun 16", val: 679.50 }, 
-            { date: "Jun 17", val: 682.10 }, { date: "Jun 18", val: 685.45 }, { date: "Jun 19 (Today)", val: 688.11 }
+            { date: "Mar 23", val: 604.43 }, { date: "Mar 24", val: 605.10 }, { date: "Mar 25", val: 603.85 }, { date: "Mar 26", val: 606.20 }, { date: "Mar 27", val: 609.12 },
+            { date: "Mar 30", val: 607.45 }, { date: "Mar 31", val: 608.20 }, { date: "Apr 01", val: 605.10 }, { date: "Apr 02", val: 603.20 }, { date: "Apr 03", val: 604.95 },
+            { date: "Apr 06", val: 606.30 }, { date: "Apr 07", val: 609.40 }, { date: "Apr 08", val: 611.45 }, { date: "Apr 09", val: 608.10 }, { date: "Apr 10", val: 605.35 },
+            { date: "Apr 13", val: 601.20 }, { date: "Apr 14", val: 598.80 }, { date: "Apr 15", val: 596.40 }, { date: "Apr 16", val: 595.10 }, { date: "Apr 17", val: 593.15 },
+            { date: "Apr 20", val: 595.30 }, { date: "Apr 21", val: 598.60 }, { date: "Apr 22", val: 597.10 }, { date: "Apr 23", val: 602.45 }, { date: "Apr 24", val: 607.40 },
+            { date: "Apr 27", val: 605.90 }, { date: "Apr 28", val: 604.15 }, { date: "Apr 29", val: 602.80 }, { date: "Apr 30", val: 601.22 }, { date: "May 01", val: 603.45 },
+            { date: "May 04", val: 605.10 }, { date: "May 05", val: 609.30 }, { date: "May 06", val: 614.90 }, { date: "May 07", val: 613.20 }, { date: "May 08", val: 615.40 },
+            { date: "May 11", val: 617.80 }, { date: "May 12", val: 620.35 }, { date: "May 13", val: 619.10 }, { date: "May 14", val: 622.60 }, { date: "May 15", val: 625.45 },
+            { date: "May 18", val: 628.70 }, { date: "May 19", val: 627.40 }, { date: "May 20", val: 629.15 }, { date: "May 21", val: 632.50 }, { date: "May 22", val: 631.10 },
+            { date: "May 25", val: 629.40 }, { date: "May 26", val: 632.30 }, { date: "May 27", val: 630.15 }, { date: "May 28", val: 627.45 }, { date: "May 29", val: 633.90 },
+            { date: "Jun 01", val: 636.20 }, { date: "Jun 02", val: 639.40 }, { date: "Jun 03", val: 642.18 }, { date: "Jun 04", val: 640.50 }, { date: "Jun 05", val: 644.15 },
+            { date: "Jun 08", val: 647.90 }, { date: "Jun 09", val: 651.92 }, { date: "Jun 10", val: 656.40 }, { date: "Jun 11", val: 654.10 }, { date: "Jun 12", val: 664.20 },
+            { date: "Jun 15", val: 671.30 }, { date: "Jun 16", val: 679.50 }, { date: "Jun 17", val: 682.10 }, { date: "Jun 18", val: 685.45 }, { date: "Jun 19", val: 688.11 }
         ];
 
-        let currentActiveView = "all"; 
+        let displayedMonth = 5; let displayedWeek = 3;
         const canvas = document.getElementById('canvasChart');
         const ctx = canvas.getContext('2d');
+        const tooltip = document.getElementById('v-tooltip');
         const matrixGridEl = document.getElementById('matrix');
 
         function paintLineChart() {
@@ -381,8 +411,16 @@
             const h = canvas.height - (pad * 2);
 
             const numericValues = rawVooHistory.map(item => item.val);
-            const minVal = Math.min(...numericValues) * 0.98;
-            const maxVal = Math.max(...numericValues) * 1.02;
+            const minVal = Math.min(...numericValues) * 0.99;
+            const maxVal = Math.max(...numericValues) * 1.01;
+
+            const coordinates = rawVooHistory.map((pt, index) => {
+                return {
+                    posX: pad + (index / (rawVooHistory.length - 1)) * w,
+                    posY: canvas.height - pad - ((pt.val - minVal) / (maxVal - minVal)) * h,
+                    info: pt
+                };
+            });
 
             ctx.strokeStyle = '#1e293b';
             ctx.lineWidth = 1;
@@ -391,85 +429,50 @@
                 ctx.beginPath(); ctx.moveTo(pad, yPos); ctx.lineTo(canvas.width - pad, yPos); ctx.stroke();
             }
 
-            const coordinates = rawVooHistory.map((pt, index) => {
-                return {
-                    posX: pad + (index / (rawVooHistory.length - 1)) * w,
-                    posY: canvas.height - pad - ((pt.val - minVal) / (maxVal - minVal)) * h
-                };
-            });
-
-            // Draw line gradient
             ctx.strokeStyle = '#3b82f6';
-            ctx.lineWidth = 3;
+            ctx.lineWidth = 2.5;
             ctx.beginPath();
             coordinates.forEach((node, idx) => {
                 if (idx === 0) ctx.moveTo(node.posX, node.posY);
                 else ctx.lineTo(node.posX, node.posY);
             });
             ctx.stroke();
-
-            // Highlight Today's Terminal closing node
-            const lastNode = coordinates[coordinates.length - 1];
-            ctx.fillStyle = '#10b981';
-            ctx.beginPath();
-            ctx.arc(lastNode.posX, lastNode.posY, 6, 0, 2 * Math.PI);
-            ctx.fill();
+            window.mappedChartPoints = coordinates;
         }
-
-        const structuralMatrix = [
-            { day: "Monday", type: "weekday", live: false, buy: "Evaluate overnight session gaps; launch long exposures if VOO prints structural strength above prior daily high patterns.", sell: "Liquidate tactical momentum calls if broader index matrices drop below the initial 30-minute opening range bar." },
-            { day: "Tuesday", type: "weekday", live: false, buy: "Add long units if institutional volume sweeps confirm defense of the moving average lines.", sell: "Scale back speculative weights if trading depth scales lower than the 5-day moving average metrics." },
-            { day: "Wednesday", type: "weekday", live: false, buy: "Deploy capital reserves inside mid-week algorithmic liquidity traps.", sell: "Trim beta allocations if macro updates introduce systematic friction." },
-            { day: "Thursday", type: "weekday", live: false, buy: "Add shares if the index tags localized support thresholds.", sell: "Enforce trailing stop architectures across shorter expiration option layers." },
-            { day: "Friday", type: "weekday", live: true, buy: "Confirm structural retention across the weekly candle boundary. Deploy core layer additions if spot holds safely above the 5-day moving average loop.", sell: "Take systematic profits on short-term delta positions. Reduce overnight risk parameters ahead of the standard weekend close." },
-            { day: "Saturday", type: "weekend", live: false, buy: "Markets Closed. Execution structures offline.", sell: "Perform comprehensive post-trade execution analysis. Audit actual filled prices against model slip thresholds." },
-            { day: "Sunday", type: "weekend", live: false, buy: "Review global index updates and overnight futures opening bars. Adjust bias parameters if gaps exceed 0.40%.", sell: "Calibrate risk sizing metrics for the upcoming Monday session open based on underlying structural volatility." }
-        ];
 
         function drawOperationalMatrix() {
             matrixGridEl.innerHTML = '';
-            
-            let filteredDataSet = structuralMatrix.filter(item => {
-                if (currentActiveView === "today") return item.live === true;
-                if (currentActiveView === "weekend") return item.type === "weekend";
-                return true; // "all"
-            });
+            const opsBlueprint = {
+                "Monday": { buy: "Evaluate overnight session gaps; launch long exposures if VOO prints structural strength above prior daily high patterns.", sell: "Liquidate tactical momentum calls if broader index matrices drop below the initial 30-minute opening range bar." },
+                "Tuesday": { buy: "Add long units if institutional volume sweeps confirm defense of the moving average lines.", sell: "Scale back speculative weights if trading depth scales lower than the 5-day moving average metrics." },
+                "Wednesday": { buy: "Deploy capital reserves inside mid-week algorithmic liquidity traps.", sell: "Trim beta allocations if macro updates introduce systematic friction." },
+                "Thursday": { buy: "Add shares if the index tags localized support thresholds.", sell: "Enforce trailing stop architectures across shorter expiration option layers." },
+                "Friday": { buy: "Incorporate additions into foundational index core slots if weekly bars verify high retention rates.", sell: "Secure cash buffers by managing exposed parameters near the weekly close." }
+            };
 
-            filteredDataSet.forEach(item => {
+            Object.keys(opsBlueprint).forEach(day => {
+                const identityString = `${displayedMonth}-W${displayedWeek}-${day}`;
                 const card = document.createElement('div');
-                card.className = `strategy-card ${item.live ? 'live-focus' : ''}`;
-                
-                let actionBlocks = '';
-                if (item.type === 'weekend') {
-                    actionBlocks = `
-                        <div class="rule-box">
-                            <span class="rule-tag weekend">Macro Assessment & Prep</span>
-                            <div class="rule-desc">${item.buy}</div>
-                        </div>
-                        <div class="rule-box">
-                            <span class="rule-tag sell">Risk Parameter Calibration</span>
-                            <div class="rule-desc">${item.sell}</div>
-                        </div>
-                    `;
-                } else {
-                    actionBlocks = `
-                        <div class="rule-box">
-                            <span class="rule-tag buy">Buy Trigger Code</span>
-                            <div class="rule-desc">${item.buy}</div>
-                        </div>
-                        <div class="rule-box">
-                            <span class="rule-tag sell">Sell Trim Trigger</span>
-                            <div class="rule-desc">${item.sell}</div>
-                        </div>
-                    `;
-                }
-
+                card.className = 'strategy-card';
                 card.innerHTML = `
-                    <div class="day-title-row">
-                        <span class="day-name">${item.day}</span>
-                        ${item.live ? '<span class="live-tag">LIVE TODAY FOCUS</span>' : ''}
+                    <div class="card-header">
+                        <div class="day-title-row">
+                            <span class="day-name">${day}</span>
+                            <span class="change-pill up">PD: +0.45%</span>
+                        </div>
                     </div>
-                    ${actionBlocks}
+                    <div class="rule-box">
+                        <div>
+                            <span class="rule-tag buy">Buy Trigger</span>
+                            <div class="rule-desc">${opsBlueprint[day].buy}</div>
+                        </div>
+                    </div>
+                    <div class="rule-box">
+                        <div>
+                            <span class="rule-tag sell">Sell Trim</span>
+                            <div class="rule-desc">${opsBlueprint[day].sell}</div>
+                        </div>
+                    </div>
                 `;
                 matrixGridEl.appendChild(card);
             });
@@ -487,31 +490,28 @@
 
             document.getElementById('cash-risk').innerText = `$${maxCashRisk.toFixed(2)}`;
             document.getElementById('risk-per-share').innerText = `$${perShareRisk.toFixed(2)}`;
-            document.getElementById('shares-result').innerText = `${exactShares} Units`;
+            document.getElementById('shares-result').innerText = `${exactShares} Shares`;
             document.getElementById('total-capital').innerText = `$${(exactShares * price).toFixed(2)}`;
         }
 
-        // Scope Filter Functionality
-        document.getElementById('filter-all').addEventListener('click', function() {
-            updateFilterState(this, 'all');
-        });
-        document.getElementById('filter-today').addEventListener('click', function() {
-            updateFilterState(this, 'today');
-        });
-        document.getElementById('filter-weekend').addEventListener('click', function() {
-            updateFilterState(this, 'weekend');
+        document.getElementById('update-data-btn').addEventListener('click', function() {
+            let ticker = document.getElementById('news-ticker');
+            ticker.style.display = 'block';
+            ticker.innerText = "🔄 Live Matrix Re-indexing Completed Successfully.";
         });
 
-        function updateFilterState(element, viewMode) {
-            document.querySelectorAll('.pill-filter').forEach(btn => btn.classList.remove('active'));
-            element.classList.add('active');
-            currentActiveView = viewMode;
+        // Event hooks
+        document.querySelectorAll('.nav-btn').forEach(btn => {
+            btn.addEventListener('click', function() {
+                document.querySelectorAll('.nav-btn').forEach(b => b.classList.remove('active'));
+                this.classList.add('active');
+                drawOperationalMatrix();
+            });
+        });
+
+        document.getElementById('month-select').addEventListener('change', function() {
+            displayedMonth = this.value;
             drawOperationalMatrix();
-        }
-
-        // Calculation Inputs Watchers
-        ['portfolio-size', 'risk-pct', 'etf-price', 'stop-price'].forEach(id => {
-            document.getElementById(id).addEventListener('input', calculateRiskModel);
         });
 
         window.addEventListener('resize', paintLineChart);
