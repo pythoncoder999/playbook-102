@@ -15,7 +15,7 @@
             --red: #ef4444;
             --blue: #3b82f6;
             --border: #1e293b;
-            --accent-glow: rgba(59, 130, 246, 0.15);
+            --accent-glow: rgba(59, 130, 246, 0.25);
         }
 
         body {
@@ -240,12 +240,13 @@
             flex-direction: column;
             justify-content: space-between;
             position: relative;
-            transition: border-color 0.2s;
+            transition: border-color 0.2s, box-shadow 0.2s;
+            scroll-margin-top: 24px;
         }
 
         .strategy-card.live-focus {
             border-color: var(--blue);
-            box-shadow: 0 0 12px var(--accent-glow);
+            box-shadow: 0 0 16px var(--accent-glow);
         }
 
         .live-tag {
@@ -464,6 +465,20 @@
         "Friday": { buy: "Incorporate additions into foundational index core slots if weekly bars verify high retention rates.", sell: "Secure cash buffers by managing exposed parameters near the weekly close." }
     };
 
+    // Calculate current localized day framework
+    function getTargetDay() {
+        const weekdays = ["Sunday", "Monday", "Tuesday", "Wednesday", "Thursday", "Friday", "Saturday"];
+        const realDayName = weekdays[new Date().getDay()];
+        
+        // Weekend mitigation override rule
+        if (realDayName === "Saturday" || realDayName === "Sunday") {
+            return "Monday";
+        }
+        return realDayName;
+    }
+
+    const currentActiveTargetDay = getTargetDay();
+
     let displayedMonth = 5; 
     let displayedWeek = 3;  
     
@@ -522,7 +537,6 @@
         window.mappedChartPoints = coordinates;
     }
 
-    // High-resolution proximity slider tracker
     document.getElementById('chart-container-box').addEventListener('mousemove', (e) => {
         if (!window.mappedChartPoints) return;
         const boundaries = canvas.getBoundingClientRect();
@@ -556,21 +570,16 @@
         paintLineChart();
     });
 
-    // Retrieve and update dataset mechanics
     function retrieveCurrentData() {
         const updateBtn = document.getElementById('update-data-btn');
         updateBtn.disabled = true;
         updateBtn.innerText = 'Fetching...';
 
         setTimeout(() => {
-            // Simulate random micro-variance across current index market pricing rows
             rawVooHistory = rawVooHistory.map((item, idx) => {
                 if (idx === rawVooHistory.length - 1) {
-                    // Update final endpoint index logic cleanly
                     const variance = (Math.random() - 0.4) * 4.5; 
                     const updatedVal = parseFloat((item.val + variance).toFixed(2));
-                    
-                    // Update Calculator UI Input with new structural spot quote
                     document.getElementById('etf-price').value = updatedVal;
                     return { date: item.date, val: updatedVal };
                 }
@@ -578,7 +587,6 @@
                 return { date: item.date, val: parseFloat((item.val + drift).toFixed(2)) };
             });
 
-            // Repaint matrices and push structural pricing recalculations
             paintLineChart();
             calculateRiskModel();
 
@@ -604,11 +612,15 @@
         Object.keys(operationalDaysBlueprint).forEach(dayKey => {
             const dataPackage = operationalDaysBlueprint[dayKey];
             const identityString = `${displayedMonth}-W${displayedWeek}-${dayKey}`;
+            const isTodayCard = (isCurrentlyActiveWindow && dayKey === currentActiveTargetDay);
 
             const templateBlock = document.createElement('div');
-            templateBlock.className = `strategy-card ${isCurrentlyActiveWindow ? 'live-focus' : ''}`;
+            templateBlock.className = `strategy-card ${isTodayCard ? 'live-focus' : ''}`;
+            if(isTodayCard) {
+                templateBlock.id = "focused-day-card";
+            }
 
-            let dynamicHeaderTag = isCurrentlyActiveWindow ? `<span class="live-tag">Active Track</span>` : '';
+            let dynamicHeaderTag = isTodayCard ? `<span class="live-tag">Today's Focus</span>` : '';
 
             templateBlock.innerHTML = `
                 ${dynamicHeaderTag}
@@ -636,6 +648,14 @@
             matrixGridEl.appendChild(templateBlock);
         });
         loadSavedStates();
+        
+        // Auto-scroll the programmatically focused day card into immediate view
+        setTimeout(() => {
+            const focusedCard = document.getElementById("focused-day-card");
+            if (focusedCard) {
+                focusedCard.scrollIntoView({ behavior: 'smooth', block: 'nearest' });
+            }
+        }, 100);
     }
 
     function triggerRowExecution(boxId) {
@@ -719,7 +739,7 @@
     });
 
     window.onload = () => {
-        document.getElementById('live-time-stamp').innerText = `Live Context: June Week 3`;
+        document.getElementById('live-time-stamp').innerText = `Live Target Focus: ${currentActiveTargetDay}`;
         paintLineChart();
         drawOperationalMatrix();
         calculateRiskModel();
