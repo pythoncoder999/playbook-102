@@ -492,373 +492,70 @@
 </div>
 
 <script>
-    // High-Resolution Daily Data Points for VOO Over the Last 90 Days
-    let rawVooHistory = [
-        { date: "Mar 23", val: 604.43 }, { date: "Mar 24", val: 605.10 }, { date: "Mar 25", val: 603.85 }, { date: "Mar 26", val: 606.20 }, { date: "Mar 27", val: 609.12 },
-        { date: "Mar 30", val: 607.45 }, { date: "Mar 31", val: 608.20 }, { date: "Apr 01", val: 605.10 }, { date: "Apr 02", val: 603.20 }, { date: "Apr 03", val: 604.95 },
-        { date: "Apr 06", val: 606.30 }, { date: "Apr 07", val: 609.40 }, { date: "Apr 08", val: 611.45 }, { date: "Apr 09", val: 608.10 }, { date: "Apr 10", val: 605.35 },
-        { date: "Apr 13", val: 601.20 }, { date: "Apr 14", val: 598.80 }, { date: "Apr 15", val: 596.40 }, { date: "Apr 16", val: 595.10 }, { date: "Apr 17", val: 593.15 },
-        { date: "Apr 20", val: 595.30 }, { date: "Apr 21", val: 598.60 }, { date: "Apr 22", val: 597.10 }, { date: "Apr 23", val: 602.45 }, { date: "Apr 24", val: 607.40 },
-        { date: "Apr 27", val: 605.90 }, { date: "Apr 28", val: 604.15 }, { date: "Apr 29", val: 602.80 }, { date: "Apr 30", val: 601.22 }, { date: "May 01", val: 603.45 },
-        { date: "May 04", val: 605.10 }, { date: "May 05", val: 609.30 }, { date: "May 06", val: 614.90 }, { date: "May 07", val: 613.20 }, { date: "May 08", val: 615.40 },
-        { date: "May 11", val: 617.80 }, { date: "May 12", val: 620.35 }, { date: "May 13", val: 619.10 }, { date: "May 14", val: 622.60 }, { date: "May 15", val: 625.45 },
-        { date: "May 18", val: 628.70 }, { date: "May 19", val: 627.40 }, { date: "May 20", val: 629.15 }, { date: "May 21", val: 632.50 }, { date: "May 22", val: 631.10 },
-        { date: "May 25", val: 629.40 }, { date: "May 26", val: 632.30 }, { date: "May 27", val: 630.15 }, { date: "May 28", val: 627.45 }, { date: "May 29", val: 633.90 },
-        { date: "Jun 01", val: 636.20 }, { date: "Jun 02", val: 639.40 }, { date: "Jun 03", val: 642.18 }, { date: "Jun 04", val: 640.50 }, { date: "Jun 05", val: 644.15 },
-        { date: "Jun 08", val: 647.90 }, { date: "Jun 09", val: 651.92 }, { date: "Jun 10", val: 656.40 }, { date: "Jun 11", val: 654.10 }, { date: "Jun 12", val: 664.20 },
-        { date: "Jun 15", val: 671.30 }, { date: "Jun 16", val: 679.50 }, { date: "Jun 17", val: 682.10 }, { date: "Jun 18", val: 685.45 }, { date: "Jun 19", val: 688.11 }
-    ];
-
-    function getPerformanceMetrics(weekNumber) {
-        const endIndex = rawVooHistory.length - 1 - ((3 - weekNumber) * 5);
-        const startIndex = endIndex - 4;
-
-        if (startIndex < 0 || endIndex >= rawVooHistory.length) {
-            return { 
-                Monday: { pd: 0, pw: 0 }, Tuesday: { pd: 0, pw: 0 }, Wednesday: { pd: 0, pw: 0 }, 
-                Thursday: { pd: 0, pw: 0 }, Friday: { pd: 0, pw: 0 }, Saturday: { pd: 0, pw: 0 }, aggregate: 0 
-            };
-        }
-
-        const currentWeekSlice = rawVooHistory.slice(startIndex, endIndex + 1);
-        const fridayPrevWeekClose = rawVooHistory[startIndex - 1] ? rawVooHistory[startIndex - 1].val : currentWeekSlice[0].val;
-
-        const calcPct = (curr, prev) => prev ? ((curr - prev) / prev) * 100 : 0;
-
-        return {
-            Monday: { pd: calcPct(currentWeekSlice[0].val, fridayPrevWeekClose), pw: calcPct(currentWeekSlice[0].val, fridayPrevWeekClose) },
-            Tuesday: { pd: calcPct(currentWeekSlice[1].val, currentWeekSlice[0].val), pw: calcPct(currentWeekSlice[1].val, fridayPrevWeekClose) },
-            Wednesday: { pd: calcPct(currentWeekSlice[2].val, currentWeekSlice[1].val), pw: calcPct(currentWeekSlice[2].val, fridayPrevWeekClose) },
-            Thursday: { pd: calcPct(currentWeekSlice[3].val, currentWeekSlice[2].val), pw: calcPct(currentWeekSlice[3].val, fridayPrevWeekClose) },
-            Friday: { pd: calcPct(currentWeekSlice[4].val, currentWeekSlice[3].val), pw: calcPct(currentWeekSlice[4].val, fridayPrevWeekClose) },
-            Saturday: { pd: calcPct(currentWeekSlice[4].val, currentWeekSlice[3].val), pw: calcPct(currentWeekSlice[4].val, fridayPrevWeekClose) },
-            aggregate: calcPct(currentWeekSlice[4].val, fridayPrevWeekClose)
-        };
-    }
-
-    const simulatedMacroWires = [
-        { msg: "⚠️ FED FLASH: Chairman hints at aggressive emergency rate normalization schedule.", drift: -12.50 },
-        { msg: "⚠️ TARIFF ALERTS: Trump announces sudden 25% import levies on industrial components.", drift: -8.20 },
-        { msg: "⚠️ GEOPOLITICS WIRE: Conflict risk escalates inside critical maritime trading canals.", drift: -14.10 },
-        { msg: "ℹ️ FEDERAL HOLIDAY: Markets closed for Juneteenth Observances.", drift: 0.00 },
-        { msg: "⚠️ TAX REFORM EXCLUSIVE: Trump pledges sweeping corporate deregulation strategy.", drift: 11.40 },
-        { msg: "⚠️ FOMC MINUTES: Fed signals complete balance sheet stabilization targets.", drift: 6.30 }
-    ];
-
-    const operationalDaysBlueprint = {
-        "Monday": { buy: "Evaluate overnight session gaps; launch long exposures if VOO prints structural strength above prior daily high patterns.", sell: "Liquidate tactical momentum calls if broader index matrices drop below the initial 30-minute opening range bar." },
-        "Tuesday": { buy: "Add long units if institutional volume sweeps confirm defense of the moving average lines.", sell: "Scale back speculative weights if trading depth scales lower than the 5-day moving average metrics." },
-        "Wednesday": { buy: "Deploy capital reserves inside mid-week algorithmic liquidity traps.", sell: "Trim beta allocations if macro updates introduce systematic friction." },
-        "Thursday": { buy: "Add shares if the index tags localized support thresholds.", sell: "Enforce trailing stop architectures across shorter expiration option layers." },
-        "Friday": { buy: "Incorporate additions into foundational index core slots if weekly bars verify high retention rates.", sell: "Secure cash buffers by managing exposed parameters near the weekly close." },
-        "Saturday": { buy: "Audit upcoming weekend calendar blocks for systematic risk parameters.", sell: "Review open directional margin positions to hedge potential Sunday evening futures gaps." }
-    };
-
-    function getTargetDay() {
-        const weekdays = ["Sunday", "Monday", "Tuesday", "Wednesday", "Thursday", "Friday", "Saturday"];
-        const realDayName = weekdays[new Date().getDay()];
-        if (realDayName === "Saturday" || realDayName === "Sunday") {
-            return "Monday";
-        }
-        return realDayName;
-    }
-
-    const currentActiveTargetDay = getTargetDay();
-    let displayedMonth = 5; 
-    let displayedWeek = 3;  
-    
-    const trueCurrentMonth = 5; 
-    const trueCurrentWeek = 3;  
-
-    const canvas = document.getElementById('canvasChart');
-    const ctx = canvas.getContext('2d');
-    const tooltip = document.getElementById('v-tooltip');
-
-    function paintLineChart() {
-        canvas.width = canvas.parentElement.clientWidth;
-        canvas.height = canvas.parentElement.clientHeight;
-        ctx.clearRect(0, 0, canvas.width, canvas.height);
-
-        const pad = 40;
-        const w = canvas.width - (pad * 2);
-        const h = canvas.height - (pad * 2);
-
-        const numericValues = rawVooHistory.map(item => item.val);
-        const minVal = Math.min(...numericValues) * 0.99;
-        const maxVal = Math.max(...numericValues) * 1.01;
-
-        const coordinates = rawVooHistory.map((pt, index) => {
-            const posX = pad + (index / (rawVooHistory.length - 1)) * w;
-            const posY = canvas.height - pad - ((pt.val - minVal) / (maxVal - minVal)) * h;
-            return { posX, posY, info: pt };
-        });
-
-        ctx.strokeStyle = '#151c2e';
-        ctx.lineWidth = 1;
-        coordinates.forEach((node, idx) => {
-            if (idx % 5 === 0) { 
-                ctx.beginPath(); ctx.moveTo(node.posX, pad); ctx.lineTo(node.posX, canvas.height - pad); ctx.stroke();
-            }
-        });
-
-        ctx.strokeStyle = '#1e293b';
-        for (let i = 0; i <= 4; i++) {
-            const axisY = pad + (i / 4) * h;
-            ctx.beginPath(); ctx.moveTo(pad, axisY); ctx.lineTo(canvas.width - pad, axisY); ctx.stroke();
-        }
-
-        ctx.strokeStyle = '#3b82f6';
-        ctx.lineWidth = 2.5;
-        ctx.beginPath();
-        coordinates.forEach((node, idx) => {
-            if (idx === 0) ctx.moveTo(node.posX, node.posY);
-            else ctx.lineTo(node.posX, node.posY);
-        });
-        ctx.stroke();
-
-        window.mappedChartPoints = coordinates;
-    }
-
-    document.getElementById('chart-container-box').addEventListener('mousemove', (e) => {
-        if (!window.mappedChartPoints) return;
-        const boundaries = canvas.getBoundingClientRect();
-        const cursorX = e.clientX - boundaries.left;
-
-        let trackingMatch = window.mappedChartPoints[0];
-        let separationDelta = Math.abs(cursorX - trackingMatch.posX);
-
-        window.mappedChartPoints.forEach(node => {
-            const itemDelta = Math.abs(cursorX - node.posX);
-            if (itemDelta < separationDelta) {
-                separationDelta = itemDelta;
-                trackingMatch = node;
-            }
-        });
-
-        paintLineChart();
-        ctx.fillStyle = '#3b82f6';
-        ctx.beginPath();
-        ctx.arc(trackingMatch.posX, trackingMatch.posY, 5, 0, 2 * Math.PI);
-        ctx.fill();
-
-        tooltip.style.display = 'block';
-        tooltip.style.left = `${trackingMatch.posX - 40}px`;
-        tooltip.style.top = `${trackingMatch.posY - 45}px`;
-        tooltip.innerHTML = `<strong>${trackingMatch.info.date}:</strong> $${trackingMatch.info.val.toFixed(2)}`;
-    });
-
-    document.getElementById('chart-container-box').addEventListener('mouseleave', () => {
-        tooltip.style.display = 'none';
-        paintLineChart();
-    });
-
-    function retrieveCurrentData() {
-        const updateBtn = document.getElementById('update-data-btn');
-        const ticker = document.getElementById('news-ticker');
-        updateBtn.disabled = true;
-        updateBtn.innerText = 'Fetching...';
-
-        setTimeout(() => {
-            const selectedWire = simulatedMacroWires[Math.floor(Math.random() * simulatedMacroWires.length)];
-            ticker.innerText = selectedWire.msg;
-            ticker.style.display = 'block';
-
-            rawVooHistory = rawVooHistory.map((item, idx) => {
-                if (idx === rawVooHistory.length - 1) {
-                    const baseVariance = (Math.random() - 0.4) * 3.5;
-                    const finalCalculatedPrice = parseFloat((item.val + baseVariance + selectedWire.drift).toFixed(2));
-                    document.getElementById('etf-price').value = finalCalculatedPrice;
-                    return { date: item.date, val: finalCalculatedPrice };
-                }
-                const baseDrift = (Math.random() - 0.5) * 1.2;
-                return { date: item.date, val: parseFloat((item.val + baseDrift).toFixed(2)) };
-            });
-
-            paintLineChart();
-            calculateRiskModel();
-            drawOperationalMatrix();
-
-            updateBtn.disabled = false;
-            updateBtn.innerText = 'Fetch Current Data';
-        }, 900);
-    }
-
-    const monthLabelsArray = ["January", "February", "March", "April", "May", "June", "July", "August", "September", "October", "November", "December"];
-    const matrixGridEl = document.getElementById('matrix');
-
-    function drawOperationalMatrix() {
-        matrixGridEl.innerHTML = '';
-        const isCurrentlyActiveWindow = (displayedMonth === trueCurrentMonth && displayedWeek === trueCurrentWeek);
-        const nameOfSelectedMonth = monthLabelsArray[displayedMonth];
-
-        document.getElementById('month-select').value = displayedMonth;
-        
-        document.querySelectorAll('.nav-btn').forEach(btn => btn.classList.remove('active'));
-        const activeNavButton = document.getElementById(`wk-${displayedWeek}`);
-        if (activeNavButton) activeNavButton.classList.add('active');
-
-        const perfData = getPerformanceMetrics(displayedWeek);
-
-        const aggBadge = document.getElementById('weekly-aggregate-perf');
-        const sign = perfData.aggregate >= 0 ? '+' : '';
-        aggBadge.innerText = `Weekly Rolling: ${sign}${perfData.aggregate.toFixed(2)}%`;
-        aggBadge.style.color = perfData.aggregate >= 0 ? 'var(--green)' : 'var(--red)';
-
-        Object.keys(operationalDaysBlueprint).forEach(dayKey => {
-            const dataPackage = operationalDaysBlueprint[dayKey];
-            const identityString = `${displayedMonth}-W${displayedWeek}-${dayKey}`;
-            const isTodayCard = (isCurrentlyActiveWindow && dayKey === currentActiveTargetDay);
-            const isSaturday = (dayKey === "Saturday");
-
-            // Extract distinct parameter metrics
-            const dayMetrics = perfData[dayKey] || { pd: 0, pw: 0 };
-            const signPD = dayMetrics.pd >= 0 ? '+' : '';
-            const signPW = dayMetrics.pw >= 0 ? '+' : '';
-            
-            const classPD = dayMetrics.pd > 0 ? 'up' : (dayMetrics.pd < 0 ? 'down' : 'flat');
-            const classPW = dayMetrics.pw > 0 ? 'up' : (dayMetrics.pw < 0 ? 'down' : 'flat');
-
-            const templateBlock = document.createElement('div');
-            templateBlock.className = `strategy-card ${isSaturday ? 'saturday-card' : ''} ${isTodayCard ? 'live-focus' : ''}`;
-            if(isTodayCard) {
-                templateBlock.id = "focused-day-card";
-            }
-
-            let dynamicHeaderTag = '';
-            if (isTodayCard) {
-                dynamicHeaderTag = `<span class="live-tag">Today's Focus</span>`;
-            } else if (isSaturday) {
-                dynamicHeaderTag = `<span class="live-tag warn">Weekend Filter</span>`;
-            }
-
-            templateBlock.innerHTML = `
-                ${dynamicHeaderTag}
-                <div class="card-header">
-                    <div class="day-title-row">
-                        <span class="day-name">${isSaturday ? 'Macro Scope' : dayKey}</span>
-                        <div class="badge-container">
-                            <span class="change-pill ${classPD}" title="Previous Close Price Delta">PD: ${signPD}${dayMetrics.pd.toFixed(2)}%</span>
-                            <span class="change-pill ${classPW}" title="Weekly Cumulative Delta">PW: ${signPW}${dayMetrics.pw.toFixed(2)}%</span>
-                        </div>
-                    </div>
-                    <span class="meta-context">${nameOfSelectedMonth} • Week ${displayedWeek} Scope</span>
-                </div>
-                
-                <div class="rule-box" onclick="triggerRowExecution('${identityString}-buy')">
-                    <input type="checkbox" id="${identityString}-buy" class="rule-cb" data-key="${identityString}-buy" onclick="event.stopPropagation(); updateGlobalMetrics();">
-                    <div class="rule-content">
-                        <span class="rule-tag ${isSaturday ? 'macro' : 'buy'}">${isSaturday ? 'Overnight Risk' : 'Buy Trigger'}</span>
-                        <div class="rule-desc">${dataPackage.buy}</div>
-                    </div>
-                </div>
-
-                <div class="rule-box" onclick="triggerRowExecution('${identityString}-sell')">
-                    <input type="checkbox" id="${identityString}-sell" class="rule-cb" data-key="${identityString}-sell" onclick="event.stopPropagation(); updateGlobalMetrics();">
-                    <div class="rule-content">
-                        <span class="rule-tag ${isSaturday ? 'macro' : 'sell'}">${isSaturday ? 'Gap Hedge' : 'Sell Trim'}</span>
-                        <div class="rule-desc">${dataPackage.sell}</div>
-                    </div>
-                </div>
-            `;
-            matrixGridEl.appendChild(templateBlock);
-        });
-        loadSavedStates();
-        
-        setTimeout(() => {
-            const focusedCard = document.getElementById("focused-day-card");
-            if (focusedCard) {
-                focusedCard.scrollIntoView({ behavior: 'smooth', block: 'nearest' });
-            }
-        }, 100);
-    }
-
-    function triggerRowExecution(boxId) {
-        const targetCheckbox = document.getElementById(boxId);
-        if (targetCheckbox) {
-            targetCheckbox.checked = !targetCheckbox.checked;
-            updateGlobalMetrics();
-        }
-    }
-
-    function handleMonthChange(selectionValue) {
-        displayedMonth = parseInt(selectionValue);
-        drawOperationalMatrix();
-    }
-
-    function handleWeekChange(weekValue) {
-        displayedWeek = parseInt(weekValue);
-        drawOperationalMatrix();
-    }
-
-    const portfolioSizeInp = document.getElementById('portfolio-size');
-    const riskPctInp = document.getElementById('risk-pct');
-    const etfPriceInp = document.getElementById('etf-price');
-    const stopPriceInp = document.getElementById('stop-price');
-
-    function calculateRiskModel() {
-        const portSize = parseFloat(portfolioSizeInp.value) || 0;
-        const riskPct = parseFloat(riskPctInp.value) || 0;
-        const price = parseFloat(etfPriceInp.value) || 0;
-        const stop = parseFloat(stopPriceInp.value) || 0;
-
-        const maxCashRisk = portSize * (riskPct / 100);
-        const perShareRisk = price - stop;
-
-        if (perShareRisk <= 0 || price <= 0) {
-            document.getElementById('shares-result').innerText = "0 Shares";
-            document.getElementById('total-capital').innerText = "$0.00";
-            document.getElementById('risk-per-share').innerText = "Stop must be below entry";
-            return;
-        }
-
-        const exactShares = Math.floor(maxCashRisk / perShareRisk);
-        const capitalRequired = exactShares * price;
-
-        document.getElementById('cash-risk').innerText = `$${maxCashRisk.toFixed(2)}`;
-        document.getElementById('risk-per-share').innerText = `$${perShareRisk.toFixed(2)}`;
-        document.getElementById('shares-result').innerText = `${exactShares} Shares`;
-        document.getElementById('total-capital').innerText = `$${capitalRequired.toFixed(2)}`;
-    }
-
-    function updateGlobalMetrics() {
-        const checkboxes = document.querySelectorAll('.rule-cb');
-        let checkedCount = 0;
-        
-        checkboxes.forEach(cb => {
-            const storageKey = cb.getAttribute('data-key');
-            localStorage.setItem(`playbook-${storageKey}`, cb.checked ? 'true' : 'false');
-            if(cb.checked) checkedCount++;
-        });
-
-        const pct = Math.round((checkedCount / checkboxes.length) * 100) || 0;
-        document.getElementById('progress-text').innerText = `${checkedCount}/${checkboxes.length} Actions (${pct}%)`;
-        document.getElementById('progress-fill').style.width = `${pct}%`;
+    // --- STATE MANAGEMENT ---
+    function saveState() {
+        const states = {};
+        document.querySelectorAll('.rule-cb').forEach(cb => states[cb.id] = cb.checked);
+        localStorage.setItem('etf_playbook_state', JSON.stringify(states));
     }
 
     function loadSavedStates() {
-        const checkboxes = document.querySelectorAll('.rule-cb');
-        checkboxes.forEach(cb => {
-            const storageKey = cb.getAttribute('data-key');
-            const savedState = localStorage.getItem(`playbook-${storageKey}`);
-            if(savedState === 'true') {
-                cb.checked = true;
-            }
+        const saved = JSON.parse(localStorage.getItem('etf_playbook_state') || '{}');
+        Object.keys(saved).forEach(id => {
+            const el = document.getElementById(id);
+            if (el) el.checked = saved[id];
         });
         updateGlobalMetrics();
     }
 
-    window.addEventListener('resize', paintLineChart);
-    [portfolioSizeInp, riskPctInp, etfPriceInp, stopPriceInp].forEach(input => {
-        input.addEventListener('input', calculateRiskModel);
-    });
+    // --- UI UPDATES & CALCULATIONS ---
+    function updateGlobalMetrics() {
+        const checkboxes = document.querySelectorAll('.rule-cb');
+        const checked = document.querySelectorAll('.rule-cb:checked').length;
+        const total = checkboxes.length;
+        const pct = total ? Math.round((checked / total) * 100) : 0;
+        
+        document.getElementById('progress-fill').style.width = `${pct}%`;
+        document.getElementById('progress-text').innerText = `${checked}/${total} Actions (${pct}%)`;
+        
+        // Add completion glow to parent card if all rules checked
+        document.querySelectorAll('.strategy-card').forEach(card => {
+            const allChecked = Array.from(card.querySelectorAll('.rule-cb')).every(c => c.checked);
+            card.style.borderColor = allChecked ? 'var(--green)' : '';
+            card.style.boxShadow = allChecked ? '0 0 10px rgba(16, 185, 129, 0.2)' : '';
+        });
+        saveState();
+    }
 
-    window.onload = () => {
-        document.getElementById('live-time-stamp').innerText = `Live Target Focus: ${currentActiveTargetDay}`;
+    function calculateRiskModel() {
+        const p = parseFloat(document.getElementById('portfolio-size').value) || 0;
+        const r = (parseFloat(document.getElementById('risk-pct').value) || 0) / 100;
+        const entry = parseFloat(document.getElementById('etf-price').value) || 0;
+        const stop = parseFloat(document.getElementById('stop-price').value) || 0;
+
+        const riskPerShare = entry - stop;
+        const cashRisk = p * r;
+        const shares = riskPerShare > 0 ? Math.floor(cashRisk / riskPerShare) : 0;
+        
+        document.getElementById('cash-risk').innerText = `$${cashRisk.toFixed(2)}`;
+        document.getElementById('risk-per-share').innerText = `$${riskPerShare.toFixed(2)}`;
+        document.getElementById('shares-result').innerText = `${shares} Shares`;
+        document.getElementById('total-capital').innerText = `$${(shares * entry).toLocaleString()}`;
+    }
+
+    // --- INITIALIZATION ---
+    document.addEventListener('DOMContentLoaded', () => {
         paintLineChart();
         drawOperationalMatrix();
+        // Attach real-time listeners for instant calculations
+        document.querySelectorAll('input[type="number"]').forEach(input => {
+            input.addEventListener('input', calculateRiskModel);
+        });
         calculateRiskModel();
-    };
-</script>
+    });
 
+    // ... (Keep your existing paintLineChart, retrieveCurrentData, and drawOperationalMatrix functions here)
+    // Ensure drawOperationalMatrix calls loadSavedStates() at the end.
+</script>
 </body>
 </html>
