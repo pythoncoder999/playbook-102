@@ -3,862 +3,1593 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Advanced ETF Execution Playbook</title>
+    <title>ETF Execution Playbook — VOO</title>
     <style>
+        @import url('https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&family=JetBrains+Mono:wght@400;500;600&display=swap');
+
         :root {
-            --bg-main: #0b0f19;
-            --bg-card: #131a2c;
-            --bg-input: #1e293b;
-            --text-main: #f8fafc;
-            --text-muted: #64748b;
-            --green: #10b981;
-            --red: #ef4444;
-            --blue: #3b82f6;
-            --orange: #f97316;
-            --border: #1e293b;
-            --accent-glow: rgba(59, 130, 246, 0.25);
+            --bg-main: #080c14;
+            --bg-card: #0d1424;
+            --bg-input: #111827;
+            --bg-hover: #1a2540;
+            --text-main: #e8edf5;
+            --text-muted: #4a5568;
+            --text-dim: #6b7280;
+            --green: #00d17a;
+            --green-dim: rgba(0, 209, 122, 0.12);
+            --red: #ff4d6d;
+            --red-dim: rgba(255, 77, 109, 0.12);
+            --blue: #3d7fff;
+            --blue-dim: rgba(61, 127, 255, 0.15);
+            --orange: #ff9f2e;
+            --orange-dim: rgba(255, 159, 46, 0.12);
+            --purple: #a78bfa;
+            --border: rgba(255,255,255,0.06);
+            --border-active: rgba(61, 127, 255, 0.4);
+            --glow-blue: 0 0 30px rgba(61, 127, 255, 0.2);
+            --mono: 'JetBrains Mono', monospace;
+            --sans: 'Inter', -apple-system, sans-serif;
         }
 
+        * { box-sizing: border-box; margin: 0; padding: 0; }
+
         body {
-            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Helvetica, Arial, sans-serif;
-            background-color: var(--bg-main);
+            font-family: var(--sans);
+            background: var(--bg-main);
             color: var(--text-main);
-            margin: 0;
-            padding: 24px;
+            min-height: 100vh;
+            padding: 20px;
             line-height: 1.5;
         }
 
-        .dashboard-container {
-            max-width: 1650px;
-            margin: 0 auto;
-            display: flex;
-            flex-direction: column;
-            gap: 24px;
-        }
+        /* ─── LAYOUT ─── */
+        .app { max-width: 1700px; margin: 0 auto; display: flex; flex-direction: column; gap: 20px; }
 
-        header {
+        /* ─── HEADER ─── */
+        .header {
             display: flex;
             justify-content: space-between;
-            align-items: center;
+            align-items: flex-start;
+            gap: 16px;
+            padding-bottom: 18px;
             border-bottom: 1px solid var(--border);
-            padding-bottom: 20px;
+            flex-wrap: wrap;
         }
 
-        h1 { margin: 0; font-size: 1.75rem; font-weight: 700; }
-        .subtitle { color: var(--text-muted); margin: 4px 0 0 0; font-size: 0.9rem; }
+        .header-left h1 {
+            font-size: 1.5rem;
+            font-weight: 700;
+            letter-spacing: -0.02em;
+            color: var(--text-main);
+        }
 
-        /* Chart Section Styles */
+        .header-left .sub {
+            font-size: 0.78rem;
+            color: var(--text-muted);
+            margin-top: 3px;
+            font-family: var(--mono);
+        }
+
+        .header-right {
+            display: flex;
+            align-items: center;
+            gap: 16px;
+            flex-wrap: wrap;
+        }
+
+        .status-pill {
+            display: flex;
+            align-items: center;
+            gap: 6px;
+            font-size: 0.75rem;
+            font-family: var(--mono);
+            padding: 5px 12px;
+            border-radius: 20px;
+            border: 1px solid var(--border);
+            background: var(--bg-card);
+            white-space: nowrap;
+        }
+
+        .status-dot {
+            width: 7px;
+            height: 7px;
+            border-radius: 50%;
+            background: var(--text-muted);
+            transition: background 0.3s;
+        }
+        .status-dot.live { background: var(--green); box-shadow: 0 0 6px var(--green); animation: pulse 2s infinite; }
+        .status-dot.loading { background: var(--orange); animation: blink 0.6s infinite; }
+        .status-dot.error { background: var(--red); }
+
+        @keyframes pulse { 0%,100% { opacity:1; } 50% { opacity:0.4; } }
+        @keyframes blink { 0%,100% { opacity:1; } 50% { opacity:0.2; } }
+
+        .compliance-block { text-align: right; }
+        .compliance-label { font-size: 0.72rem; color: var(--text-muted); margin-bottom: 4px; font-family: var(--mono); }
+        .compliance-bar-track { background: var(--bg-input); height: 5px; border-radius: 3px; width: 180px; overflow: hidden; }
+        .compliance-bar-fill { height: 100%; width: 0%; background: var(--green); border-radius: 3px; transition: width 0.4s ease; }
+        .compliance-count { font-size: 0.72rem; color: var(--text-dim); margin-top: 3px; font-family: var(--mono); text-align: right; }
+
+        /* ─── TICKER BANNER ─── */
+        .ticker-banner {
+            background: linear-gradient(90deg, transparent, rgba(255,159,46,0.08), transparent);
+            border: 1px solid rgba(255,159,46,0.2);
+            border-radius: 8px;
+            padding: 10px 16px;
+            font-size: 0.8rem;
+            font-family: var(--mono);
+            color: var(--orange);
+            display: none;
+            align-items: center;
+            gap: 10px;
+        }
+        .ticker-banner.show { display: flex; }
+        .ticker-icon { font-size: 1rem; flex-shrink: 0; }
+
+        /* ─── PRICE STRIP ─── */
+        .price-strip {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(160px, 1fr));
+            gap: 12px;
+        }
+
+        .price-card {
+            background: var(--bg-card);
+            border: 1px solid var(--border);
+            border-radius: 10px;
+            padding: 14px 16px;
+            position: relative;
+            overflow: hidden;
+        }
+
+        .price-card::before {
+            content: '';
+            position: absolute;
+            top: 0; left: 0; right: 0;
+            height: 2px;
+            border-radius: 2px 2px 0 0;
+        }
+        .price-card.primary::before { background: var(--blue); }
+        .price-card.bull::before { background: var(--green); }
+        .price-card.bear::before { background: var(--red); }
+        .price-card.neutral::before { background: var(--orange); }
+
+        .price-card-label {
+            font-size: 0.67rem;
+            text-transform: uppercase;
+            letter-spacing: 0.08em;
+            color: var(--text-muted);
+            font-weight: 600;
+            margin-bottom: 6px;
+        }
+
+        .price-card-value {
+            font-family: var(--mono);
+            font-size: 1.35rem;
+            font-weight: 600;
+            color: var(--text-main);
+        }
+
+        .price-card-sub {
+            font-size: 0.72rem;
+            color: var(--text-dim);
+            margin-top: 2px;
+            font-family: var(--mono);
+        }
+
+        .price-card-delta {
+            position: absolute;
+            top: 14px;
+            right: 14px;
+            font-size: 0.72rem;
+            font-family: var(--mono);
+            font-weight: 600;
+            padding: 2px 7px;
+            border-radius: 4px;
+        }
+        .price-card-delta.up { background: var(--green-dim); color: var(--green); }
+        .price-card-delta.down { background: var(--red-dim); color: var(--red); }
+
+        /* ─── CHART ─── */
         .chart-panel {
-            background-color: var(--bg-card);
+            background: var(--bg-card);
             border: 1px solid var(--border);
             border-radius: 12px;
             padding: 20px;
-            position: relative;
         }
 
         .chart-header {
             display: flex;
             justify-content: space-between;
             align-items: center;
-            margin-bottom: 12px;
+            margin-bottom: 14px;
+            flex-wrap: wrap;
+            gap: 10px;
         }
 
-        .chart-actions {
+        .chart-title {
+            font-size: 0.85rem;
+            font-weight: 600;
+            color: var(--text-main);
+        }
+
+        .chart-meta {
+            font-size: 0.72rem;
+            color: var(--text-muted);
+            font-family: var(--mono);
+            margin-top: 2px;
+        }
+
+        .chart-controls {
             display: flex;
             align-items: center;
-            gap: 16px;
+            gap: 10px;
+            flex-wrap: wrap;
         }
 
-        .live-news-ticker {
-            background: rgba(249, 115, 22, 0.1);
-            border: 1px solid rgba(249, 115, 22, 0.3);
-            color: var(--orange);
-            font-size: 0.8rem;
-            padding: 4px 12px;
-            border-radius: 6px;
-            display: none;
-            font-weight: 500;
+        .range-pills {
+            display: flex;
+            gap: 4px;
         }
 
-        .update-btn {
-            background-color: var(--blue);
-            color: var(--text-main);
+        .range-pill {
+            background: transparent;
+            border: 1px solid var(--border);
+            color: var(--text-muted);
+            font-size: 0.72rem;
+            font-family: var(--mono);
+            padding: 4px 9px;
+            border-radius: 5px;
+            cursor: pointer;
+            transition: all 0.15s;
+        }
+        .range-pill:hover { border-color: var(--blue); color: var(--blue); }
+        .range-pill.active { background: var(--blue-dim); border-color: var(--blue); color: var(--blue); }
+
+        .fetch-btn {
+            background: var(--blue);
+            color: #fff;
             border: none;
-            padding: 6px 14px;
-            border-radius: 6px;
-            font-size: 0.8rem;
+            padding: 7px 16px;
+            border-radius: 7px;
+            font-size: 0.78rem;
             font-weight: 600;
             cursor: pointer;
-            transition: background-color 0.2s, opacity 0.2s;
+            font-family: var(--sans);
+            display: flex;
+            align-items: center;
+            gap: 6px;
+            transition: opacity 0.2s, transform 0.1s;
         }
-
-        .update-btn:hover { background-color: #2563eb; }
-        .update-btn:disabled { opacity: 0.6; cursor: not-allowed; }
+        .fetch-btn:hover { opacity: 0.9; }
+        .fetch-btn:active { transform: scale(0.97); }
+        .fetch-btn:disabled { opacity: 0.45; cursor: not-allowed; }
 
         .chart-wrapper {
             width: 100%;
             height: 200px;
             position: relative;
+            cursor: crosshair;
         }
 
         .chart-tooltip {
             position: absolute;
             background: var(--bg-input);
             border: 1px solid var(--blue);
-            padding: 6px 10px;
-            border-radius: 6px;
-            font-size: 0.8rem;
+            padding: 7px 11px;
+            border-radius: 7px;
+            font-size: 0.75rem;
+            font-family: var(--mono);
             pointer-events: none;
             display: none;
             z-index: 10;
-            box-shadow: 0 4px 12px rgba(0,0,0,0.5);
+            white-space: nowrap;
+            box-shadow: var(--glow-blue);
         }
 
-        /* Multi-Column Layout */
-        .layout-grid {
+        /* ─── BODY GRID ─── */
+        .body-grid {
             display: grid;
             grid-template-columns: 1fr;
-            gap: 24px;
-        }
-
-        @media (min-width: 1200px) {
-            .layout-grid { grid-template-columns: 280px 1fr; }
-        }
-
-        /* Sidebar Toolkit */
-        .sidebar {
-            display: flex;
-            flex-direction: column;
-            gap: 24px;
-        }
-
-        .panel {
-            background-color: var(--bg-card);
-            border: 1px solid var(--border);
-            border-radius: 12px;
-            padding: 20px;
-        }
-
-        .panel-title {
-            font-size: 1rem;
-            font-weight: 600;
-            margin-top: 0;
-            margin-bottom: 16px;
-            display: flex;
-            align-items: center;
-            gap: 8px;
-            border-bottom: 1px solid var(--border);
-            padding-bottom: 8px;
-        }
-
-        .form-group { margin-bottom: 12px; }
-        label {
-            display: block;
-            font-size: 0.8rem;
-            color: var(--text-muted);
-            margin-bottom: 4px;
-            text-transform: uppercase;
-            font-weight: 600;
-        }
-
-        input, select {
-            width: 100%;
-            background-color: var(--bg-input);
-            border: 1px solid var(--border);
-            color: var(--text-main);
-            padding: 8px 12px;
-            border-radius: 6px;
-            box-sizing: border-box;
-            font-size: 0.95rem;
-        }
-        input:focus, select:focus { outline: 1px solid var(--blue); }
-
-        .calc-result {
-            background-color: var(--bg-main);
-            padding: 12px;
-            border-radius: 6px;
-            margin-top: 16px;
-            border-left: 3px solid var(--blue);
-        }
-
-        .result-line {
-            display: flex;
-            justify-content: space-between;
-            font-size: 0.85rem;
-            margin-bottom: 4px;
-        }
-        .result-line:last-child { margin-bottom: 0; }
-        .result-val { font-weight: bold; color: var(--text-main); }
-        .result-val.highlight { color: var(--green); font-size: 1.1rem; }
-
-        /* Playbook Steps Checklist Workspace */
-        .main-content {
-            display: flex;
-            flex-direction: column;
             gap: 20px;
         }
 
-        .navigation-row {
-            display: flex;
-            justify-content: space-between;
-            align-items: center;
-            border-bottom: 1px solid var(--border);
-            padding-bottom: 12px;
-            gap: 16px;
-            flex-wrap: wrap;
+        @media (min-width: 1200px) {
+            .body-grid { grid-template-columns: 270px 1fr; }
         }
 
-        .nav-buttons {
-            display: flex;
-            gap: 8px;
-        }
+        /* ─── SIDEBAR ─── */
+        .sidebar { display: flex; flex-direction: column; gap: 16px; }
 
-        .weekly-perf-badge {
-            font-size: 0.85rem;
-            font-weight: 600;
+        .panel {
             background: var(--bg-card);
             border: 1px solid var(--border);
-            padding: 6px 14px;
-            border-radius: 6px;
+            border-radius: 12px;
+            padding: 18px;
         }
 
-        .nav-btn {
-            background: var(--bg-card);
-            border: 1px solid var(--border);
+        .panel-title {
+            font-size: 0.75rem;
+            font-weight: 700;
+            text-transform: uppercase;
+            letter-spacing: 0.1em;
             color: var(--text-muted);
-            padding: 8px 16px;
-            border-radius: 6px;
-            cursor: pointer;
-            font-size: 0.85rem;
+            padding-bottom: 12px;
+            margin-bottom: 14px;
+            border-bottom: 1px solid var(--border);
+            display: flex;
+            align-items: center;
+            gap: 7px;
+        }
+
+        .form-group { margin-bottom: 11px; }
+        .form-group:last-of-type { margin-bottom: 0; }
+
+        label {
+            display: block;
+            font-size: 0.68rem;
+            color: var(--text-muted);
+            margin-bottom: 4px;
+            text-transform: uppercase;
+            letter-spacing: 0.07em;
             font-weight: 600;
         }
-        .nav-btn.active {
-            background: var(--blue);
+
+        input[type="number"], select {
+            width: 100%;
+            background: var(--bg-input);
+            border: 1px solid var(--border);
             color: var(--text-main);
+            padding: 8px 11px;
+            border-radius: 7px;
+            font-size: 0.88rem;
+            font-family: var(--mono);
+            transition: border-color 0.15s;
+        }
+        input[type="number"]:focus, select:focus {
+            outline: none;
             border-color: var(--blue);
         }
 
-        .matrix-grid {
-            display: grid;
-            grid-template-columns: repeat(auto-fill, minmax(320px, 1fr));
-            gap: 16px;
+        .calc-block {
+            background: var(--bg-main);
+            border-radius: 8px;
+            padding: 12px 14px;
+            margin-top: 14px;
+            border-left: 2px solid var(--blue);
         }
 
-        .strategy-card {
-            background-color: var(--bg-card);
+        .calc-row {
+            display: flex;
+            justify-content: space-between;
+            align-items: baseline;
+            font-size: 0.8rem;
+            padding: 3px 0;
+        }
+
+        .calc-label { color: var(--text-muted); }
+        .calc-value { font-family: var(--mono); color: var(--text-main); font-weight: 600; }
+        .calc-value.green { color: var(--green); font-size: 1.05rem; }
+        .calc-value.red { color: var(--red); }
+
+        .calc-divider { border: none; border-top: 1px solid var(--border); margin: 7px 0; }
+
+        .risk-meter {
+            margin-top: 10px;
+            padding: 10px;
+            border-radius: 6px;
+            font-size: 0.75rem;
+            font-family: var(--mono);
+            text-align: center;
+            font-weight: 600;
+        }
+        .risk-meter.safe { background: var(--green-dim); color: var(--green); border: 1px solid rgba(0,209,122,0.2); }
+        .risk-meter.caution { background: var(--orange-dim); color: var(--orange); border: 1px solid rgba(255,159,46,0.2); }
+        .risk-meter.danger { background: var(--red-dim); color: var(--red); border: 1px solid rgba(255,77,109,0.2); }
+
+        /* ─── MAIN ─── */
+        .main { display: flex; flex-direction: column; gap: 16px; }
+
+        .control-row {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            flex-wrap: wrap;
+            gap: 10px;
+        }
+
+        .week-tabs {
+            display: flex;
+            gap: 6px;
+            background: var(--bg-card);
+            padding: 4px;
+            border-radius: 9px;
+            border: 1px solid var(--border);
+        }
+
+        .week-tab {
+            padding: 6px 16px;
+            border-radius: 6px;
+            border: none;
+            background: transparent;
+            color: var(--text-muted);
+            font-size: 0.78rem;
+            font-weight: 600;
+            cursor: pointer;
+            font-family: var(--sans);
+            transition: all 0.15s;
+        }
+        .week-tab:hover { color: var(--text-main); }
+        .week-tab.active { background: var(--blue); color: #fff; }
+        .week-tab.current-wk { position: relative; }
+        .week-tab.current-wk::after {
+            content: '';
+            position: absolute;
+            bottom: -1px;
+            left: 50%;
+            transform: translateX(-50%);
+            width: 4px;
+            height: 4px;
+            border-radius: 50%;
+            background: var(--green);
+        }
+
+        .rolling-badge {
+            display: flex;
+            align-items: center;
+            gap: 8px;
+            font-size: 0.8rem;
+            font-family: var(--mono);
+            padding: 7px 14px;
+            border-radius: 8px;
+            border: 1px solid var(--border);
+            background: var(--bg-card);
+        }
+
+        /* ─── MATRIX ─── */
+        .day-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fill, minmax(310px, 1fr));
+            gap: 14px;
+        }
+
+        .day-card {
+            background: var(--bg-card);
             border: 1px solid var(--border);
             border-radius: 12px;
             padding: 16px;
-            display: flex;
-            flex-direction: column;
-            justify-content: space-between;
             position: relative;
             transition: border-color 0.2s, box-shadow 0.2s;
-            scroll-margin-top: 24px;
+            overflow: hidden;
         }
 
-        .strategy-card.live-focus {
-            border-color: var(--blue);
-            box-shadow: 0 0 16px var(--accent-glow);
+        .day-card::after {
+            content: '';
+            position: absolute;
+            top: 0; left: 0; right: 0;
+            height: 2px;
+            border-radius: 2px 2px 0 0;
+            background: transparent;
+            transition: background 0.2s;
         }
 
-        .strategy-card.saturday-card {
-            border: 1px dashed rgba(249, 115, 22, 0.4);
-        }
+        .day-card.today-card { border-color: var(--blue); box-shadow: var(--glow-blue); }
+        .day-card.today-card::after { background: var(--blue); }
+        .day-card.weekend-card { border-style: dashed; border-color: rgba(255,159,46,0.3); }
+        .day-card.weekend-card::after { background: var(--orange); }
 
-        .live-tag {
+        .card-badge {
             position: absolute;
             top: 12px;
             right: 12px;
-            background: rgba(59, 130, 246, 0.2);
-            color: var(--blue);
-            font-size: 0.65rem;
-            padding: 2px 6px;
-            border-radius: 4px;
-            font-weight: bold;
+            font-size: 0.62rem;
+            font-weight: 700;
             text-transform: uppercase;
-            z-index: 2;
+            letter-spacing: 0.07em;
+            padding: 3px 7px;
+            border-radius: 4px;
         }
-        .live-tag.warn { background: rgba(249, 115, 22, 0.2); color: var(--orange); }
+        .card-badge.today { background: var(--blue-dim); color: var(--blue); border: 1px solid rgba(61,127,255,0.3); }
+        .card-badge.weekend { background: var(--orange-dim); color: var(--orange); border: 1px solid rgba(255,159,46,0.3); }
 
-        .card-header {
+        .card-day-name {
+            font-weight: 700;
+            font-size: 1rem;
+            letter-spacing: -0.01em;
+            padding-right: 70px;
+        }
+
+        .card-month-label {
+            font-size: 0.7rem;
+            color: var(--text-muted);
+            font-family: var(--mono);
+            margin-top: 2px;
+            margin-bottom: 10px;
+        }
+
+        .perf-pills {
             display: flex;
-            flex-direction: column;
+            gap: 5px;
             margin-bottom: 12px;
         }
 
-        .day-title-row {
-            display: flex;
-            justify-content: space-between;
-            align-items: flex-start;
-            flex-wrap: wrap;
-            gap: 8px;
-            margin-bottom: 4px;
+        .perf-pill {
+            font-size: 0.68rem;
+            font-family: var(--mono);
+            font-weight: 600;
+            padding: 3px 8px;
+            border-radius: 4px;
         }
+        .perf-pill.up { background: var(--green-dim); color: var(--green); }
+        .perf-pill.down { background: var(--red-dim); color: var(--red); }
+        .perf-pill.flat { background: var(--bg-input); color: var(--text-dim); }
 
-        .day-name { font-weight: 700; font-size: 1.1rem; }
-        
-        .badge-container {
-            display: flex;
-            gap: 4px;
-            align-items: center;
-        }
-
-        .change-pill { 
-            font-size: 0.7rem; 
-            font-weight: 600; 
-            padding: 2px 6px; 
-            border-radius: 4px; 
-            white-space: nowrap;
-        }
-        .change-pill.up { background: rgba(16, 185, 129, 0.15); color: var(--green); }
-        .change-pill.down { background: rgba(239, 68, 68, 0.15); color: var(--red); }
-        .change-pill.flat { background: var(--bg-input); color: var(--text-muted); }
-        
-        .meta-context { font-size: 0.75rem; color: var(--text-muted); }
-
-        .rule-box {
-            background-color: var(--bg-main);
-            border-radius: 6px;
+        .rule-row {
+            background: var(--bg-input);
+            border: 1px solid var(--border);
+            border-radius: 8px;
             padding: 10px 12px;
-            margin-bottom: 8px;
+            margin-bottom: 7px;
             display: flex;
             align-items: flex-start;
             gap: 10px;
             cursor: pointer;
-            user-select: none;
+            transition: border-color 0.15s, background 0.15s;
         }
-        .rule-box:last-child { margin-bottom: 0; }
+        .rule-row:last-child { margin-bottom: 0; }
+        .rule-row:hover { border-color: rgba(255,255,255,0.1); background: var(--bg-hover); }
+        .rule-row.checked { border-color: rgba(61,127,255,0.3); background: var(--blue-dim); }
 
-        .rule-box input[type="checkbox"] {
-            width: 16px;
-            height: 16px;
+        .rule-row input[type="checkbox"] {
+            width: 15px;
+            height: 15px;
             margin-top: 2px;
             cursor: pointer;
             accent-color: var(--blue);
             flex-shrink: 0;
         }
 
-        .rule-content { font-size: 0.85rem; }
-        .rule-tag {
-            font-size: 0.7rem;
-            font-weight: bold;
+        .rule-body { flex: 1; }
+
+        .rule-type {
+            font-size: 0.62rem;
+            font-weight: 700;
             text-transform: uppercase;
-            display: inline-block;
+            letter-spacing: 0.08em;
             margin-bottom: 2px;
+            display: block;
         }
-        .rule-tag.buy { color: var(--green); }
-        .rule-tag.sell { color: var(--red); }
-        .rule-tag.macro { color: var(--orange); }
-        .rule-desc { color: var(--text-main); }
+        .rule-type.buy { color: var(--green); }
+        .rule-type.sell { color: var(--red); }
+        .rule-type.macro { color: var(--orange); }
 
-        .progress-bar-container {
-            background-color: var(--bg-input);
-            height: 6px;
-            border-radius: 3px;
-            width: 100%;
-            overflow: hidden;
-        }
-        .progress-bar-fill {
-            background-color: var(--green);
-            height: 100%;
-            width: 0%;
-            transition: width 0.3s ease;
-        }
+        .rule-text { font-size: 0.8rem; color: var(--text-dim); line-height: 1.45; }
 
-        .summary-stats {
-            display: flex;
-            justify-content: space-between;
+        /* ─── LOADING OVERLAY ─── */
+        .loading-overlay {
+            display: none;
+            position: fixed;
+            inset: 0;
+            background: rgba(8,12,20,0.75);
+            z-index: 100;
             align-items: center;
-            font-size: 0.85rem;
-            color: var(--text-muted);
-            margin-bottom: 6px;
+            justify-content: center;
+            backdrop-filter: blur(4px);
         }
+        .loading-overlay.show { display: flex; }
+
+        .loading-box {
+            background: var(--bg-card);
+            border: 1px solid var(--border);
+            border-radius: 12px;
+            padding: 28px 36px;
+            text-align: center;
+        }
+
+        .spinner {
+            width: 36px;
+            height: 36px;
+            border: 3px solid var(--border);
+            border-top-color: var(--blue);
+            border-radius: 50%;
+            animation: spin 0.8s linear infinite;
+            margin: 0 auto 14px;
+        }
+        @keyframes spin { to { transform: rotate(360deg); } }
+
+        .loading-text { font-size: 0.85rem; color: var(--text-muted); font-family: var(--mono); }
+
+        /* ─── ERROR BANNER ─── */
+        .error-banner {
+            display: none;
+            background: var(--red-dim);
+            border: 1px solid rgba(255,77,109,0.3);
+            border-radius: 8px;
+            padding: 10px 14px;
+            font-size: 0.8rem;
+            color: var(--red);
+            font-family: var(--mono);
+            align-items: center;
+            gap: 8px;
+        }
+        .error-banner.show { display: flex; }
+
+        /* ─── AUTO-REFRESH BAR ─── */
+        .auto-refresh-row {
+            display: flex;
+            align-items: center;
+            gap: 12px;
+            font-size: 0.75rem;
+            color: var(--text-muted);
+            font-family: var(--mono);
+        }
+
+        .auto-toggle {
+            display: flex;
+            align-items: center;
+            gap: 6px;
+            cursor: pointer;
+        }
+
+        .toggle-switch {
+            width: 32px;
+            height: 18px;
+            background: var(--bg-input);
+            border-radius: 9px;
+            border: 1px solid var(--border);
+            position: relative;
+            transition: background 0.2s;
+            cursor: pointer;
+        }
+        .toggle-switch::after {
+            content: '';
+            position: absolute;
+            width: 12px;
+            height: 12px;
+            background: var(--text-muted);
+            border-radius: 50%;
+            top: 2px;
+            left: 2px;
+            transition: transform 0.2s, background 0.2s;
+        }
+        .toggle-switch.on { background: var(--blue-dim); border-color: var(--blue); }
+        .toggle-switch.on::after { transform: translateX(14px); background: var(--blue); }
+
+        .countdown { font-family: var(--mono); color: var(--blue); }
     </style>
 </head>
 <body>
 
-<div class="dashboard-container">
-    <header>
-        <div>
-            <h1>ETF Rule-Based Execution Playbook</h1>
-            <p class="subtitle">Systematic rules calculated from 5-Year historical trends paired with real-time VOO metrics</p>
-        </div>
-        <div style="text-align: right;">
-            <div class="summary-stats">
-                <span>Playbook Compliance</span>
-                <span id="progress-text">0/12 Actions (0%)</span>
-            </div>
-            <div class="progress-bar-container" style="width: 200px;">
-                <div class="progress-bar-fill" id="progress-fill"></div>
-            </div>
-        </div>
-    </header>
+<div class="loading-overlay" id="loadingOverlay">
+    <div class="loading-box">
+        <div class="spinner"></div>
+        <div class="loading-text" id="loadingText">Fetching market data…</div>
+    </div>
+</div>
 
-    <div class="chart-panel">
-        <div class="chart-header">
-            <span style="font-weight: 600; font-size: 0.95rem;">VOO Benchmark Index Price Action (Daily Data Points)</span>
-            <div class="chart-actions">
-                <div class="live-news-ticker" id="news-ticker">Wire Status: Nominal</div>
-                <span style="font-size: 0.8rem; color: var(--text-muted);" id="live-time-stamp">System Scope Active</span>
-                <button class="update-btn" id="update-data-btn" onclick="retrieveCurrentData()">Fetch Current Data</button>
-            </div>
+<div class="app">
+
+    <!-- HEADER -->
+    <div class="header">
+        <div class="header-left">
+            <h1>ETF Execution Playbook</h1>
+            <div class="sub" id="headerSub">VOO · Systematic Rule Engine · Loading…</div>
         </div>
-        <div class="chart-wrapper" id="chart-container-box">
-            <div class="chart-tooltip" id="v-tooltip"></div>
-            <canvas id="canvasChart"></canvas>
+        <div class="header-right">
+            <div class="status-pill">
+                <span class="status-dot" id="statusDot"></span>
+                <span id="statusText">Initializing</span>
+            </div>
+            <div class="compliance-block">
+                <div class="compliance-label">Playbook Compliance</div>
+                <div class="compliance-bar-track">
+                    <div class="compliance-bar-fill" id="compFill"></div>
+                </div>
+                <div class="compliance-count" id="compCount">0/12 · 0%</div>
+            </div>
         </div>
     </div>
 
-    <div class="layout-grid">
+    <!-- TICKER BANNER -->
+    <div class="ticker-banner" id="tickerBanner">
+        <span class="ticker-icon">📡</span>
+        <span id="tickerMsg"></span>
+    </div>
+
+    <!-- ERROR BANNER -->
+    <div class="error-banner" id="errorBanner">
+        <span>⚠</span>
+        <span id="errorMsg">Could not reach market data API. Using cached data.</span>
+    </div>
+
+    <!-- PRICE STRIP -->
+    <div class="price-strip" id="priceStrip">
+        <div class="price-card primary">
+            <div class="price-card-label">VOO Last Price</div>
+            <div class="price-card-value" id="pcPrice">—</div>
+            <div class="price-card-sub" id="pcAsOf">Loading…</div>
+            <span class="price-card-delta" id="pcDelta" style="display:none"></span>
+        </div>
+        <div class="price-card bull">
+            <div class="price-card-label">Day Change</div>
+            <div class="price-card-value" id="pcChange">—</div>
+            <div class="price-card-sub" id="pcChangePct">—</div>
+        </div>
+        <div class="price-card neutral">
+            <div class="price-card-label">Session Range</div>
+            <div class="price-card-value" id="pcRange">—</div>
+            <div class="price-card-sub">High / Low</div>
+        </div>
+        <div class="price-card neutral">
+            <div class="price-card-label">Prev. Close</div>
+            <div class="price-card-value" id="pcPrev">—</div>
+            <div class="price-card-sub">T-1 closing price</div>
+        </div>
+        <div class="price-card neutral">
+            <div class="price-card-label">52-Wk Range</div>
+            <div class="price-card-value" id="pc52">—</div>
+            <div class="price-card-sub">Low → High</div>
+        </div>
+        <div class="price-card neutral">
+            <div class="price-card-label">Volume (M)</div>
+            <div class="price-card-value" id="pcVol">—</div>
+            <div class="price-card-sub" id="pcVolAvg">Avg: —</div>
+        </div>
+    </div>
+
+    <!-- CHART -->
+    <div class="chart-panel">
+        <div class="chart-header">
+            <div>
+                <div class="chart-title">VOO · Price History</div>
+                <div class="chart-meta" id="chartMeta">Loading historical data…</div>
+            </div>
+            <div class="chart-controls">
+                <div class="range-pills">
+                    <button class="range-pill" onclick="setRange(30)">1M</button>
+                    <button class="range-pill active" id="rng60" onclick="setRange(60)">3M</button>
+                    <button class="range-pill" onclick="setRange(90)">6M</button>
+                </div>
+                <div class="auto-refresh-row">
+                    <div class="auto-toggle" onclick="toggleAutoRefresh()">
+                        <div class="toggle-switch" id="autoToggle"></div>
+                        <span>Auto</span>
+                    </div>
+                    <span class="countdown" id="cdText" style="display:none">—s</span>
+                </div>
+                <button class="fetch-btn" id="fetchBtn" onclick="fetchAllData()">
+                    <span>↻</span> Refresh Data
+                </button>
+            </div>
+        </div>
+        <div class="chart-wrapper" id="chartWrap">
+            <div class="chart-tooltip" id="chartTip"></div>
+            <canvas id="priceCanvas"></canvas>
+        </div>
+    </div>
+
+    <!-- BODY -->
+    <div class="body-grid">
+
+        <!-- SIDEBAR -->
         <div class="sidebar">
             <div class="panel">
-                <h3 class="panel-title">Scope Filters</h3>
+                <div class="panel-title">⚙ Scope Filter</div>
                 <div class="form-group">
-                    <label>Target Month Matrix</label>
-                    <select id="month-select" onchange="handleMonthChange(this.value)">
-                        <option value="0">January</option>
-                        <option value="1">February</option>
-                        <option value="2">March</option>
-                        <option value="3">April</option>
-                        <option value="4">May</option>
-                        <option value="5">June</option>
-                        <option value="6">July</option>
-                        <option value="7">August</option>
-                        <option value="8">September</option>
-                        <option value="9">October</option>
-                        <option value="10">November</option>
-                        <option value="11">December</option>
+                    <label>View Month</label>
+                    <select id="monthSel" onchange="handleMonthChange(this.value)">
+                        <option value="0">January</option><option value="1">February</option>
+                        <option value="2">March</option><option value="3">April</option>
+                        <option value="4">May</option><option value="5">June</option>
+                        <option value="6">July</option><option value="7">August</option>
+                        <option value="8">September</option><option value="9">October</option>
+                        <option value="10">November</option><option value="11">December</option>
                     </select>
                 </div>
             </div>
 
             <div class="panel">
-                <h3 class="panel-title">Position Sizing Engine</h3>
+                <div class="panel-title">⚖ Position Sizing</div>
                 <div class="form-group">
-                    <label>Total Account Balance ($)</label>
-                    <input type="number" id="portfolio-size" value="25000" min="1">
+                    <label>Account Balance ($)</label>
+                    <input type="number" id="inpBalance" value="25000" min="1">
                 </div>
                 <div class="form-group">
-                    <label>Max Portfolio Risk Max (%)</label>
-                    <input type="number" id="risk-pct" value="1" step="0.25" min="0.1">
+                    <label>Max Risk Per Trade (%)</label>
+                    <input type="number" id="inpRisk" value="1" step="0.25" min="0.1" max="10">
                 </div>
                 <div class="form-group">
-                    <label>ETF Current Price ($)</label>
-                    <input type="number" id="etf-price" value="688.11" min="1">
+                    <label>ETF Entry Price ($)</label>
+                    <input type="number" id="inpEntry" value="688.11" min="0.01">
                 </div>
                 <div class="form-group">
-                    <label>Systematic Stop Loss Price ($)</label>
-                    <input type="number" id="stop-price" value="671.50" min="1">
+                    <label>Stop-Loss Price ($)</label>
+                    <input type="number" id="inpStop" value="671.50" min="0.01">
+                </div>
+                <div class="form-group">
+                    <label>Suggested Stop (2% ATR)</label>
+                    <input type="number" id="inpSuggestedStop" value="—" readonly style="color:var(--text-muted)">
                 </div>
 
-                <div class="calc-result">
-                    <div class="result-line">
-                        <span>Cash Risk Exposure:</span>
-                        <span class="result-val" id="cash-risk">$250.00</span>
+                <div class="calc-block">
+                    <div class="calc-row">
+                        <span class="calc-label">Cash at Risk</span>
+                        <span class="calc-value" id="calcCash">—</span>
                     </div>
-                    <div class="result-line">
-                        <span>Risk Per Share:</span>
-                        <span class="result-val" id="risk-per-share">$16.61</span>
+                    <div class="calc-row">
+                        <span class="calc-label">Risk / Share</span>
+                        <span class="calc-value" id="calcRPS">—</span>
                     </div>
-                    <div class="result-line" style="margin-top: 8px; border-top: 1px solid var(--border); padding-top: 8px;">
-                        <span>Target Position Size:</span>
-                        <span class="result-val highlight" id="shares-result">15 Shares</span>
+                    <hr class="calc-divider">
+                    <div class="calc-row">
+                        <span class="calc-label">Target Shares</span>
+                        <span class="calc-value green" id="calcShares">—</span>
                     </div>
-                    <div class="result-line">
-                        <span>Total Capital Required:</span>
-                        <span class="result-val" id="total-capital">$10,321.65</span>
+                    <div class="calc-row">
+                        <span class="calc-label">Capital Required</span>
+                        <span class="calc-value" id="calcCapital">—</span>
                     </div>
+                    <div class="calc-row">
+                        <span class="calc-label">% of Portfolio</span>
+                        <span class="calc-value" id="calcPct">—</span>
+                    </div>
+                    <div class="risk-meter safe" id="riskMeter">Risk Level: SAFE</div>
                 </div>
             </div>
         </div>
 
-        <div class="main-content">
-            <div class="navigation-row">
-                <div class="nav-buttons">
-                    <button class="nav-btn" id="wk-1" onclick="handleWeekChange(1)">Week 1</button>
-                    <button class="nav-btn" id="wk-2" onclick="handleWeekChange(2)">Week 2</button>
-                    <button class="nav-btn" id="wk-3" onclick="handleWeekChange(3)">Week 3</button>
-                    <button class="nav-btn" id="wk-4" onclick="handleWeekChange(4)">Week 4</button>
+        <!-- MAIN CONTENT -->
+        <div class="main">
+            <div class="control-row">
+                <div class="week-tabs" id="weekTabs">
+                    <button class="week-tab" id="wt1" onclick="setWeek(1)">Week 1</button>
+                    <button class="week-tab" id="wt2" onclick="setWeek(2)">Week 2</button>
+                    <button class="week-tab" id="wt3" onclick="setWeek(3)">Week 3</button>
+                    <button class="week-tab" id="wt4" onclick="setWeek(4)">Week 4</button>
                 </div>
-                <div class="weekly-perf-badge" id="weekly-aggregate-perf">
-                    Weekly Rolling: --%
+                <div class="rolling-badge">
+                    <span style="color:var(--text-muted);font-size:0.72rem;">Rolling Wk</span>
+                    <span id="rollingBadge" style="font-weight:700;">—</span>
                 </div>
             </div>
-            
-            <div class="matrix-grid" id="matrix"></div>
+
+            <div class="day-grid" id="dayGrid"></div>
         </div>
+
     </div>
 </div>
 
 <script>
-    // High-Resolution Daily Data Points for VOO Over the Last 90 Days
-    let rawVooHistory = [
-        { date: "Mar 23", val: 604.43 }, { date: "Mar 24", val: 605.10 }, { date: "Mar 25", val: 603.85 }, { date: "Mar 26", val: 606.20 }, { date: "Mar 27", val: 609.12 },
-        { date: "Mar 30", val: 607.45 }, { date: "Mar 31", val: 608.20 }, { date: "Apr 01", val: 605.10 }, { date: "Apr 02", val: 603.20 }, { date: "Apr 03", val: 604.95 },
-        { date: "Apr 06", val: 606.30 }, { date: "Apr 07", val: 609.40 }, { date: "Apr 08", val: 611.45 }, { date: "Apr 09", val: 608.10 }, { date: "Apr 10", val: 605.35 },
-        { date: "Apr 13", val: 601.20 }, { date: "Apr 14", val: 598.80 }, { date: "Apr 15", val: 596.40 }, { date: "Apr 16", val: 595.10 }, { date: "Apr 17", val: 593.15 },
-        { date: "Apr 20", val: 595.30 }, { date: "Apr 21", val: 598.60 }, { date: "Apr 22", val: 597.10 }, { date: "Apr 23", val: 602.45 }, { date: "Apr 24", val: 607.40 },
-        { date: "Apr 27", val: 605.90 }, { date: "Apr 28", val: 604.15 }, { date: "Apr 29", val: 602.80 }, { date: "Apr 30", val: 601.22 }, { date: "May 01", val: 603.45 },
-        { date: "May 04", val: 605.10 }, { date: "May 05", val: 609.30 }, { date: "May 06", val: 614.90 }, { date: "May 07", val: 613.20 }, { date: "May 08", val: 615.40 },
-        { date: "May 11", val: 617.80 }, { date: "May 12", val: 620.35 }, { date: "May 13", val: 619.10 }, { date: "May 14", val: 622.60 }, { date: "May 15", val: 625.45 },
-        { date: "May 18", val: 628.70 }, { date: "May 19", val: 627.40 }, { date: "May 20", val: 629.15 }, { date: "May 21", val: 632.50 }, { date: "May 22", val: 631.10 },
-        { date: "May 25", val: 629.40 }, { date: "May 26", val: 632.30 }, { date: "May 27", val: 630.15 }, { date: "May 28", val: 627.45 }, { date: "May 29", val: 633.90 },
-        { date: "Jun 01", val: 636.20 }, { date: "Jun 02", val: 639.40 }, { date: "Jun 03", val: 642.18 }, { date: "Jun 04", val: 640.50 }, { date: "Jun 05", val: 644.15 },
-        { date: "Jun 08", val: 647.90 }, { date: "Jun 09", val: 651.92 }, { date: "Jun 10", val: 656.40 }, { date: "Jun 11", val: 654.10 }, { date: "Jun 12", val: 664.20 },
-        { date: "Jun 15", val: 671.30 }, { date: "Jun 16", val: 679.50 }, { date: "Jun 17", val: 682.10 }, { date: "Jun 18", val: 685.45 }, { date: "Jun 19", val: 688.11 }
-    ];
+'use strict';
 
-    function getPerformanceMetrics(weekNumber) {
-        const endIndex = rawVooHistory.length - 1 - ((3 - weekNumber) * 5);
-        const startIndex = endIndex - 4;
+// ───────────────────────────────────────────────────────────────
+// CONSTANTS & STATE
+// ───────────────────────────────────────────────────────────────
 
-        if (startIndex < 0 || endIndex >= rawVooHistory.length) {
-            return { 
-                Monday: { pd: 0, pw: 0 }, Tuesday: { pd: 0, pw: 0 }, Wednesday: { pd: 0, pw: 0 }, 
-                Thursday: { pd: 0, pw: 0 }, Friday: { pd: 0, pw: 0 }, Saturday: { pd: 0, pw: 0 }, aggregate: 0 
-            };
-        }
+const MONTH_NAMES = ["January","February","March","April","May","June","July","August","September","October","November","December"];
 
-        const currentWeekSlice = rawVooHistory.slice(startIndex, endIndex + 1);
-        const fridayPrevWeekClose = rawVooHistory[startIndex - 1] ? rawVooHistory[startIndex - 1].val : currentWeekSlice[0].val;
+const DAY_RULES = {
+    Monday:    { buy: "Evaluate overnight session gaps; enter long exposure if VOO shows structural strength above prior session highs with confirming volume.", sell: "Close tactical positions if the index breaks below the opening 30-minute range low on above-average volume." },
+    Tuesday:   { buy: "Add exposure if institutional accumulation is confirmed — look for volume sweeps above the 20-day average defending key moving averages.", sell: "Reduce speculative weight if trading volume collapses below the 5-day average, signaling lack of conviction." },
+    Wednesday: { buy: "Deploy reserves into mid-week liquidity pockets; strongest entries often occur between 10:30–11:30 AM ET.", sell: "Trim beta-heavy allocations if macro data or Fed commentary introduces unexpected systematic friction." },
+    Thursday:  { buy: "Add shares if VOO tags localized support levels; validate with RSI divergence or volume confirmation.", sell: "Apply trailing stop ladders below short-term swing lows; protect gains ahead of Friday volatility." },
+    Friday:    { buy: "Build core position additions if the weekly bar closes with high retention above key MAs — high-conviction signal for continuation.", sell: "Secure cash buffer by trimming excess risk exposure before the weekly close; avoid holding speculative size over the weekend." },
+    Saturday:  { buy: "Audit macro calendar for upcoming economic releases, Fed speeches, and geopolitical events that could drive Sunday night futures gaps.", sell: "Review directional margin positions; consider hedging open exposure with protective puts or reducing size by 30–50%." }
+};
 
-        const calcPct = (curr, prev) => prev ? ((curr - prev) / prev) * 100 : 0;
+const now = new Date();
+const TODAY_DOW = now.getDay(); // 0=Sun,1=Mon,...,6=Sat
+const TODAY_NAME = ["Sunday","Monday","Tuesday","Wednesday","Thursday","Friday","Saturday"][TODAY_DOW];
+const TRUE_MONTH = now.getMonth();
+const TRUE_WEEK  = Math.ceil(now.getDate() / 7); // 1-4
 
-        return {
-            Monday: { pd: calcPct(currentWeekSlice[0].val, fridayPrevWeekClose), pw: calcPct(currentWeekSlice[0].val, fridayPrevWeekClose) },
-            Tuesday: { pd: calcPct(currentWeekSlice[1].val, currentWeekSlice[0].val), pw: calcPct(currentWeekSlice[1].val, fridayPrevWeekClose) },
-            Wednesday: { pd: calcPct(currentWeekSlice[2].val, currentWeekSlice[1].val), pw: calcPct(currentWeekSlice[2].val, fridayPrevWeekClose) },
-            Thursday: { pd: calcPct(currentWeekSlice[3].val, currentWeekSlice[2].val), pw: calcPct(currentWeekSlice[3].val, fridayPrevWeekClose) },
-            Friday: { pd: calcPct(currentWeekSlice[4].val, currentWeekSlice[3].val), pw: calcPct(currentWeekSlice[4].val, fridayPrevWeekClose) },
-            Saturday: { pd: calcPct(currentWeekSlice[4].val, currentWeekSlice[3].val), pw: calcPct(currentWeekSlice[4].val, fridayPrevWeekClose) },
-            aggregate: calcPct(currentWeekSlice[4].val, fridayPrevWeekClose)
-        };
-    }
+// Determine the "active" day for highlighting in the playbook
+// Weekends point to Monday (planning day), Sundays also to Monday
+function getActivePlaybookDay() {
+    if (TODAY_DOW === 0) return "Monday"; // Sunday
+    if (TODAY_DOW === 6) return "Saturday"; // Saturday – show the Macro Scope card
+    return TODAY_NAME;
+}
+const ACTIVE_DAY = getActivePlaybookDay();
 
-    const simulatedMacroWires = [
-        { msg: "⚠️ FED FLASH: Chairman hints at aggressive emergency rate normalization schedule.", drift: -12.50 },
-        { msg: "⚠️ TARIFF ALERTS: Trump announces sudden 25% import levies on industrial components.", drift: -8.20 },
-        { msg: "⚠️ GEOPOLITICS WIRE: Conflict risk escalates inside critical maritime trading canals.", drift: -14.10 },
-        { msg: "ℹ️ FEDERAL HOLIDAY: Markets closed for Juneteenth Observances.", drift: 0.00 },
-        { msg: "⚠️ TAX REFORM EXCLUSIVE: Trump pledges sweeping corporate deregulation strategy.", drift: 11.40 },
-        { msg: "⚠️ FOMC MINUTES: Fed signals complete balance sheet stabilization targets.", drift: 6.30 }
-    ];
+let state = {
+    priceHistory: [],    // { date, val } array
+    displayRange: 60,
+    displayMonth: TRUE_MONTH,
+    displayWeek:  TRUE_WEEK,
+    autoRefresh: false,
+    autoTimer: null,
+    countdown: 60,
+    cdInterval: null,
+    currentPrice: null,
+    prevClose: null,
+    dayHigh: null,
+    dayLow: null,
+    wk52High: null,
+    wk52Low: null,
+    volume: null,
+    avgVolume: null,
+    lastFetch: null,
+    isLoading: false,
+};
 
-    const operationalDaysBlueprint = {
-        "Monday": { buy: "Evaluate overnight session gaps; launch long exposures if VOO prints structural strength above prior daily high patterns.", sell: "Liquidate tactical momentum calls if broader index matrices drop below the initial 30-minute opening range bar." },
-        "Tuesday": { buy: "Add long units if institutional volume sweeps confirm defense of the moving average lines.", sell: "Scale back speculative weights if trading depth scales lower than the 5-day moving average metrics." },
-        "Wednesday": { buy: "Deploy capital reserves inside mid-week algorithmic liquidity traps.", sell: "Trim beta allocations if macro updates introduce systematic friction." },
-        "Thursday": { buy: "Add shares if the index tags localized support thresholds.", sell: "Enforce trailing stop architectures across shorter expiration option layers." },
-        "Friday": { buy: "Incorporate additions into foundational index core slots if weekly bars verify high retention rates.", sell: "Secure cash buffers by managing exposed parameters near the weekly close." },
-        "Saturday": { buy: "Audit upcoming weekend calendar blocks for systematic risk parameters.", sell: "Review open directional margin positions to hedge potential Sunday evening futures gaps." }
-    };
+// ───────────────────────────────────────────────────────────────
+// SEED DATA — realistic fallback used when API is unavailable
+// (Last 90 trading days of VOO approximate prices as of Jun 2026)
+// ───────────────────────────────────────────────────────────────
 
-    function getTargetDay() {
-        const weekdays = ["Sunday", "Monday", "Tuesday", "Wednesday", "Thursday", "Friday", "Saturday"];
-        const realDayName = weekdays[new Date().getDay()];
-        if (realDayName === "Saturday" || realDayName === "Sunday") {
-            return "Monday";
-        }
-        return realDayName;
-    }
+const SEED_HISTORY = [
+    {date:"Mar 23",val:604.43},{date:"Mar 24",val:605.10},{date:"Mar 25",val:603.85},{date:"Mar 26",val:606.20},{date:"Mar 27",val:609.12},
+    {date:"Mar 30",val:607.45},{date:"Mar 31",val:608.20},{date:"Apr 01",val:605.10},{date:"Apr 02",val:603.20},{date:"Apr 03",val:604.95},
+    {date:"Apr 06",val:606.30},{date:"Apr 07",val:609.40},{date:"Apr 08",val:611.45},{date:"Apr 09",val:608.10},{date:"Apr 10",val:605.35},
+    {date:"Apr 13",val:601.20},{date:"Apr 14",val:598.80},{date:"Apr 15",val:596.40},{date:"Apr 16",val:595.10},{date:"Apr 17",val:593.15},
+    {date:"Apr 20",val:595.30},{date:"Apr 21",val:598.60},{date:"Apr 22",val:597.10},{date:"Apr 23",val:602.45},{date:"Apr 24",val:607.40},
+    {date:"Apr 27",val:605.90},{date:"Apr 28",val:604.15},{date:"Apr 29",val:602.80},{date:"Apr 30",val:601.22},{date:"May 01",val:603.45},
+    {date:"May 04",val:605.10},{date:"May 05",val:609.30},{date:"May 06",val:614.90},{date:"May 07",val:613.20},{date:"May 08",val:615.40},
+    {date:"May 11",val:617.80},{date:"May 12",val:620.35},{date:"May 13",val:619.10},{date:"May 14",val:622.60},{date:"May 15",val:625.45},
+    {date:"May 18",val:628.70},{date:"May 19",val:627.40},{date:"May 20",val:629.15},{date:"May 21",val:632.50},{date:"May 22",val:631.10},
+    {date:"May 25",val:629.40},{date:"May 26",val:632.30},{date:"May 27",val:630.15},{date:"May 28",val:627.45},{date:"May 29",val:633.90},
+    {date:"Jun 01",val:636.20},{date:"Jun 02",val:639.40},{date:"Jun 03",val:642.18},{date:"Jun 04",val:640.50},{date:"Jun 05",val:644.15},
+    {date:"Jun 08",val:647.90},{date:"Jun 09",val:651.92},{date:"Jun 10",val:656.40},{date:"Jun 11",val:654.10},{date:"Jun 12",val:664.20},
+    {date:"Jun 15",val:671.30},{date:"Jun 16",val:679.50},{date:"Jun 17",val:682.10},{date:"Jun 18",val:685.45},{date:"Jun 19",val:688.11}
+];
 
-    const currentActiveTargetDay = getTargetDay();
-    let displayedMonth = 5; 
-    let displayedWeek = 3;  
-    
-    const trueCurrentMonth = 5; 
-    const trueCurrentWeek = 3;  
+// ───────────────────────────────────────────────────────────────
+// DATA FETCHING via Yahoo Finance (proxy-friendly endpoint)
+// ───────────────────────────────────────────────────────────────
 
-    const canvas = document.getElementById('canvasChart');
-    const ctx = canvas.getContext('2d');
-    const tooltip = document.getElementById('v-tooltip');
+async function fetchYahooQuote(ticker) {
+    // Yahoo Finance v8 chart endpoint – no API key required
+    const url = `https://query1.finance.yahoo.com/v8/finance/chart/${ticker}?interval=1d&range=6mo`;
+    const res = await fetch(url, { headers: { 'Accept': 'application/json' } });
+    if (!res.ok) throw new Error(`HTTP ${res.status}`);
+    return await res.json();
+}
 
-    function paintLineChart() {
-        canvas.width = canvas.parentElement.clientWidth;
-        canvas.height = canvas.parentElement.clientHeight;
-        ctx.clearRect(0, 0, canvas.width, canvas.height);
+async function fetchAllData() {
+    if (state.isLoading) return;
+    state.isLoading = true;
 
-        const pad = 40;
-        const w = canvas.width - (pad * 2);
-        const h = canvas.height - (pad * 2);
+    setStatus('loading', 'Fetching…');
+    document.getElementById('fetchBtn').disabled = true;
+    document.getElementById('errorBanner').classList.remove('show');
 
-        const numericValues = rawVooHistory.map(item => item.val);
-        const minVal = Math.min(...numericValues) * 0.99;
-        const maxVal = Math.max(...numericValues) * 1.01;
+    try {
+        setLoadingText('Connecting to market data feed…');
+        showLoading(true);
 
-        const coordinates = rawVooHistory.map((pt, index) => {
-            const posX = pad + (index / (rawVooHistory.length - 1)) * w;
-            const posY = canvas.height - pad - ((pt.val - minVal) / (maxVal - minVal)) * h;
-            return { posX, posY, info: pt };
+        const data = await fetchYahooQuote('VOO');
+        const chart = data?.chart?.result?.[0];
+        if (!chart) throw new Error('Invalid payload');
+
+        const meta      = chart.meta;
+        const timestamps= chart.timestamp;
+        const quotes    = chart.indicators?.quote?.[0];
+
+        if (!timestamps || !quotes) throw new Error('Missing OHLCV data');
+
+        // ── Build price history ──
+        const closes = quotes.close;
+        const dateArr = timestamps.map(ts => {
+            const d = new Date(ts * 1000);
+            return `${['Jan','Feb','Mar','Apr','May','Jun','Jul','Aug','Sep','Oct','Nov','Dec'][d.getMonth()]} ${d.getDate()}`;
         });
 
-        ctx.strokeStyle = '#151c2e';
+        state.priceHistory = timestamps.map((ts, i) => ({
+            date: dateArr[i],
+            val:  closes[i] != null ? parseFloat(closes[i].toFixed(2)) : null,
+            high: quotes.high[i],
+            low:  quotes.low[i],
+            vol:  quotes.volume[i],
+        })).filter(d => d.val != null);
+
+        // ── Extract quote metrics ──
+        state.currentPrice = parseFloat((meta.regularMarketPrice || closes[closes.length-1]).toFixed(2));
+        state.prevClose    = parseFloat((meta.chartPreviousClose || meta.previousClose || closes[closes.length-2]).toFixed(2));
+        state.dayHigh      = parseFloat((meta.regularMarketDayHigh || 0).toFixed(2));
+        state.dayLow       = parseFloat((meta.regularMarketDayLow || 0).toFixed(2));
+        state.wk52High     = parseFloat((meta.fiftyTwoWeekHigh || 0).toFixed(2));
+        state.wk52Low      = parseFloat((meta.fiftyTwoWeekLow || 0).toFixed(2));
+        state.volume       = meta.regularMarketVolume || null;
+
+        // Compute avg volume from last 20 days
+        const recentVols = state.priceHistory.slice(-20).map(d => d.vol).filter(Boolean);
+        state.avgVolume = recentVols.length ? Math.round(recentVols.reduce((a,b)=>a+b,0)/recentVols.length) : null;
+
+        state.lastFetch = new Date();
+
+        setStatus('live', `Live · ${fmtTime(state.lastFetch)}`);
+        updatePriceStrip();
+        updateChart();
+        updatePositionSizing();
+        updatePlaybook();
+
+        // Auto-populate entry price from live quote
+        document.getElementById('inpEntry').value = state.currentPrice;
+
+        // Suggested ATR stop (2% below current price)
+        document.getElementById('inpSuggestedStop').value = (state.currentPrice * 0.98).toFixed(2);
+
+        document.getElementById('headerSub').textContent =
+            `VOO · $${state.currentPrice} · Updated ${fmtTime(state.lastFetch)} · ${MONTH_NAMES[TRUE_MONTH]} ${now.getDate()}, ${now.getFullYear()}`;
+
+        showBanner(`✅ Market data refreshed — ${state.priceHistory.length} sessions loaded. Last price: $${state.currentPrice}`, false);
+
+    } catch (err) {
+        console.warn('Fetch failed, using seed data:', err);
+        useSeedData();
+        showError(`Live data unavailable (${err.message}). Displaying cached data from seed.`);
+        setStatus('error', 'Offline · Cached Data');
+    } finally {
+        state.isLoading = false;
+        showLoading(false);
+        document.getElementById('fetchBtn').disabled = false;
+    }
+}
+
+function useSeedData() {
+    state.priceHistory = SEED_HISTORY.map(d => ({ ...d }));
+    const last = state.priceHistory[state.priceHistory.length - 1];
+    const prev = state.priceHistory[state.priceHistory.length - 2];
+    state.currentPrice = last.val;
+    state.prevClose    = prev.val;
+    state.dayHigh      = parseFloat((last.val * 1.005).toFixed(2));
+    state.dayLow       = parseFloat((last.val * 0.996).toFixed(2));
+    state.wk52High     = parseFloat((last.val * 1.18).toFixed(2));
+    state.wk52Low      = parseFloat((last.val * 0.76).toFixed(2));
+    state.volume       = 3_820_000;
+    state.avgVolume    = 4_200_000;
+    state.lastFetch    = new Date();
+
+    document.getElementById('inpEntry').value = state.currentPrice;
+    document.getElementById('inpSuggestedStop').value = (state.currentPrice * 0.98).toFixed(2);
+    document.getElementById('headerSub').textContent =
+        `VOO · $${state.currentPrice} · Cached Data · ${MONTH_NAMES[TRUE_MONTH]} ${now.getDate()}, ${now.getFullYear()}`;
+
+    updatePriceStrip();
+    updateChart();
+    updatePositionSizing();
+    updatePlaybook();
+}
+
+// ───────────────────────────────────────────────────────────────
+// PRICE STRIP
+// ───────────────────────────────────────────────────────────────
+
+function updatePriceStrip() {
+    const p = state.currentPrice, prev = state.prevClose;
+    const chg = p && prev ? (p - prev) : 0;
+    const chgPct = prev ? (chg / prev * 100) : 0;
+    const up = chg >= 0;
+
+    setText('pcPrice', p != null ? `$${p.toFixed(2)}` : '—');
+    setText('pcAsOf', state.lastFetch ? fmtTime(state.lastFetch) : '—');
+
+    const deltaEl = document.getElementById('pcDelta');
+    if (p && prev) {
+        deltaEl.textContent = `${up?'+':''}${chg.toFixed(2)}`;
+        deltaEl.className = `price-card-delta ${up?'up':'down'}`;
+        deltaEl.style.display = '';
+    }
+
+    const changeEl = document.getElementById('pcChange');
+    changeEl.textContent = p && prev ? `${up?'+':''}$${Math.abs(chg).toFixed(2)}` : '—';
+    changeEl.style.color = up ? 'var(--green)' : 'var(--red)';
+
+    const chgPctEl = document.getElementById('pcChangePct');
+    chgPctEl.textContent = p && prev ? `${up?'+':''}${chgPct.toFixed(2)}%` : '—';
+    chgPctEl.style.color = up ? 'var(--green)' : 'var(--red)';
+
+    setText('pcRange', state.dayHigh && state.dayLow ? `$${state.dayHigh.toFixed(0)} / $${state.dayLow.toFixed(0)}` : '—');
+    setText('pcPrev', prev != null ? `$${prev.toFixed(2)}` : '—');
+    setText('pc52', state.wk52High && state.wk52Low ? `$${state.wk52Low.toFixed(0)} → $${state.wk52High.toFixed(0)}` : '—');
+
+    if (state.volume) {
+        setText('pcVol', `${(state.volume / 1_000_000).toFixed(1)}M`);
+        setText('pcVolAvg', state.avgVolume ? `Avg: ${(state.avgVolume/1_000_000).toFixed(1)}M` : 'Avg: —');
+    }
+
+    // Update price strip accent color based on direction
+    const priceCard = document.querySelector('.price-card.primary');
+    if (priceCard) priceCard.className = `price-card primary ${up ? 'bull' : 'bear'}`;
+}
+
+// ───────────────────────────────────────────────────────────────
+// CHART
+// ───────────────────────────────────────────────────────────────
+
+const canvas = document.getElementById('priceCanvas');
+const ctx    = canvas.getContext('2d');
+const tip    = document.getElementById('chartTip');
+let chartPoints = [];
+
+function setRange(n) {
+    state.displayRange = n;
+    document.querySelectorAll('.range-pill').forEach(b => b.classList.remove('active'));
+    const labels = {30:'1M',60:'3M',90:'6M'};
+    document.querySelectorAll('.range-pill').forEach(b => {
+        if (b.textContent === (labels[n]||'')) b.classList.add('active');
+    });
+    updateChart();
+}
+
+function updateChart() {
+    const slice = state.priceHistory.slice(-state.displayRange);
+    if (!slice.length) return;
+
+    const startDate = slice[0].date;
+    const endDate   = slice[slice.length-1].date;
+    document.getElementById('chartMeta').textContent = `${slice.length} sessions · ${startDate} → ${endDate}`;
+
+    paintChart(slice);
+}
+
+function paintChart(data) {
+    canvas.width  = canvas.parentElement.clientWidth;
+    canvas.height = canvas.parentElement.clientHeight;
+    ctx.clearRect(0, 0, canvas.width, canvas.height);
+
+    const pad  = { top: 20, right: 16, bottom: 28, left: 52 };
+    const W    = canvas.width  - pad.left - pad.right;
+    const H    = canvas.height - pad.top  - pad.bottom;
+
+    const vals   = data.map(d => d.val);
+    const minVal = Math.min(...vals);
+    const maxVal = Math.max(...vals);
+    const range  = maxVal - minVal || 1;
+    const padded = range * 0.08;
+    const lo     = minVal - padded;
+    const hi     = maxVal + padded;
+
+    const toX = i => pad.left + (i / (data.length - 1)) * W;
+    const toY = v => canvas.height - pad.bottom - ((v - lo) / (hi - lo)) * H;
+
+    // Grid lines + Y-axis labels
+    ctx.font = '10px JetBrains Mono, monospace';
+    ctx.fillStyle = '#4a5568';
+    const gridLines = 5;
+    for (let i = 0; i <= gridLines; i++) {
+        const gv = lo + (hi - lo) * (i / gridLines);
+        const gy = toY(gv);
+        ctx.strokeStyle = 'rgba(255,255,255,0.04)';
         ctx.lineWidth = 1;
-        coordinates.forEach((node, idx) => {
-            if (idx % 5 === 0) { 
-                ctx.beginPath(); ctx.moveTo(node.posX, pad); ctx.lineTo(node.posX, canvas.height - pad); ctx.stroke();
-            }
-        });
-
-        ctx.strokeStyle = '#1e293b';
-        for (let i = 0; i <= 4; i++) {
-            const axisY = pad + (i / 4) * h;
-            ctx.beginPath(); ctx.moveTo(pad, axisY); ctx.lineTo(canvas.width - pad, axisY); ctx.stroke();
-        }
-
-        ctx.strokeStyle = '#3b82f6';
-        ctx.lineWidth = 2.5;
-        ctx.beginPath();
-        coordinates.forEach((node, idx) => {
-            if (idx === 0) ctx.moveTo(node.posX, node.posY);
-            else ctx.lineTo(node.posX, node.posY);
-        });
-        ctx.stroke();
-
-        window.mappedChartPoints = coordinates;
+        ctx.beginPath(); ctx.moveTo(pad.left, gy); ctx.lineTo(canvas.width - pad.right, gy); ctx.stroke();
+        ctx.fillText(`$${gv.toFixed(0)}`, 0, gy + 4);
     }
 
-    document.getElementById('chart-container-box').addEventListener('mousemove', (e) => {
-        if (!window.mappedChartPoints) return;
-        const boundaries = canvas.getBoundingClientRect();
-        const cursorX = e.clientX - boundaries.left;
+    // X-axis date labels (show ~5)
+    const labelStep = Math.max(1, Math.floor(data.length / 5));
+    data.forEach((d, i) => {
+        if (i % labelStep === 0 || i === data.length - 1) {
+            ctx.fillStyle = '#4a5568';
+            ctx.fillText(d.date, toX(i) - 16, canvas.height - 6);
+        }
+    });
 
-        let trackingMatch = window.mappedChartPoints[0];
-        let separationDelta = Math.abs(cursorX - trackingMatch.posX);
+    // Fill gradient under line
+    const grad = ctx.createLinearGradient(0, pad.top, 0, canvas.height - pad.bottom);
+    grad.addColorStop(0, 'rgba(61,127,255,0.18)');
+    grad.addColorStop(1, 'rgba(61,127,255,0.01)');
+    ctx.beginPath();
+    data.forEach((d, i) => {
+        if (i === 0) ctx.moveTo(toX(i), toY(d.val));
+        else ctx.lineTo(toX(i), toY(d.val));
+    });
+    ctx.lineTo(toX(data.length-1), canvas.height - pad.bottom);
+    ctx.lineTo(toX(0), canvas.height - pad.bottom);
+    ctx.closePath();
+    ctx.fillStyle = grad;
+    ctx.fill();
 
-        window.mappedChartPoints.forEach(node => {
-            const itemDelta = Math.abs(cursorX - node.posX);
-            if (itemDelta < separationDelta) {
-                separationDelta = itemDelta;
-                trackingMatch = node;
-            }
-        });
+    // Line
+    ctx.strokeStyle = '#3d7fff';
+    ctx.lineWidth = 2;
+    ctx.lineJoin = 'round';
+    ctx.beginPath();
+    data.forEach((d, i) => {
+        if (i === 0) ctx.moveTo(toX(i), toY(d.val));
+        else ctx.lineTo(toX(i), toY(d.val));
+    });
+    ctx.stroke();
 
-        paintLineChart();
-        ctx.fillStyle = '#3b82f6';
+    // Last point dot
+    if (data.length) {
+        const last = data[data.length-1];
+        ctx.fillStyle = '#3d7fff';
         ctx.beginPath();
-        ctx.arc(trackingMatch.posX, trackingMatch.posY, 5, 0, 2 * Math.PI);
+        ctx.arc(toX(data.length-1), toY(last.val), 4.5, 0, Math.PI*2);
         ctx.fill();
-
-        tooltip.style.display = 'block';
-        tooltip.style.left = `${trackingMatch.posX - 40}px`;
-        tooltip.style.top = `${trackingMatch.posY - 45}px`;
-        tooltip.innerHTML = `<strong>${trackingMatch.info.date}:</strong> $${trackingMatch.info.val.toFixed(2)}`;
-    });
-
-    document.getElementById('chart-container-box').addEventListener('mouseleave', () => {
-        tooltip.style.display = 'none';
-        paintLineChart();
-    });
-
-    function retrieveCurrentData() {
-        const updateBtn = document.getElementById('update-data-btn');
-        const ticker = document.getElementById('news-ticker');
-        updateBtn.disabled = true;
-        updateBtn.innerText = 'Fetching...';
-
-        setTimeout(() => {
-            const selectedWire = simulatedMacroWires[Math.floor(Math.random() * simulatedMacroWires.length)];
-            ticker.innerText = selectedWire.msg;
-            ticker.style.display = 'block';
-
-            rawVooHistory = rawVooHistory.map((item, idx) => {
-                if (idx === rawVooHistory.length - 1) {
-                    const baseVariance = (Math.random() - 0.4) * 3.5;
-                    const finalCalculatedPrice = parseFloat((item.val + baseVariance + selectedWire.drift).toFixed(2));
-                    document.getElementById('etf-price').value = finalCalculatedPrice;
-                    return { date: item.date, val: finalCalculatedPrice };
-                }
-                const baseDrift = (Math.random() - 0.5) * 1.2;
-                return { date: item.date, val: parseFloat((item.val + baseDrift).toFixed(2)) };
-            });
-
-            paintLineChart();
-            calculateRiskModel();
-            drawOperationalMatrix();
-
-            updateBtn.disabled = false;
-            updateBtn.innerText = 'Fetch Current Data';
-        }, 900);
+        ctx.strokeStyle = 'rgba(61,127,255,0.3)';
+        ctx.lineWidth = 6;
+        ctx.beginPath();
+        ctx.arc(toX(data.length-1), toY(last.val), 8, 0, Math.PI*2);
+        ctx.stroke();
     }
 
-    const monthLabelsArray = ["January", "February", "March", "April", "May", "June", "July", "August", "September", "October", "November", "December"];
-    const matrixGridEl = document.getElementById('matrix');
+    chartPoints = data.map((d, i) => ({ x: toX(i), y: toY(d.val), info: d }));
+}
 
-    function drawOperationalMatrix() {
-        matrixGridEl.innerHTML = '';
-        const isCurrentlyActiveWindow = (displayedMonth === trueCurrentMonth && displayedWeek === trueCurrentWeek);
-        const nameOfSelectedMonth = monthLabelsArray[displayedMonth];
+document.getElementById('chartWrap').addEventListener('mousemove', e => {
+    if (!chartPoints.length) return;
+    const rect = canvas.getBoundingClientRect();
+    const mx   = e.clientX - rect.left;
 
-        document.getElementById('month-select').value = displayedMonth;
-        
-        document.querySelectorAll('.nav-btn').forEach(btn => btn.classList.remove('active'));
-        const activeNavButton = document.getElementById(`wk-${displayedWeek}`);
-        if (activeNavButton) activeNavButton.classList.add('active');
+    let best = chartPoints[0], bestDist = Infinity;
+    chartPoints.forEach(p => {
+        const d = Math.abs(mx - p.x);
+        if (d < bestDist) { bestDist = d; best = p; }
+    });
 
-        const perfData = getPerformanceMetrics(displayedWeek);
+    // Redraw with crosshair + hover dot
+    const slice = state.priceHistory.slice(-state.displayRange);
+    paintChart(slice);
 
-        const aggBadge = document.getElementById('weekly-aggregate-perf');
-        const sign = perfData.aggregate >= 0 ? '+' : '';
-        aggBadge.innerText = `Weekly Rolling: ${sign}${perfData.aggregate.toFixed(2)}%`;
-        aggBadge.style.color = perfData.aggregate >= 0 ? 'var(--green)' : 'var(--red)';
+    ctx.strokeStyle = 'rgba(255,255,255,0.08)';
+    ctx.lineWidth = 1;
+    ctx.setLineDash([4,4]);
+    ctx.beginPath(); ctx.moveTo(best.x, 0); ctx.lineTo(best.x, canvas.height); ctx.stroke();
+    ctx.setLineDash([]);
 
-        Object.keys(operationalDaysBlueprint).forEach(dayKey => {
-            const dataPackage = operationalDaysBlueprint[dayKey];
-            const identityString = `${displayedMonth}-W${displayedWeek}-${dayKey}`;
-            const isTodayCard = (isCurrentlyActiveWindow && dayKey === currentActiveTargetDay);
-            const isSaturday = (dayKey === "Saturday");
+    ctx.fillStyle = '#fff';
+    ctx.beginPath(); ctx.arc(best.x, best.y, 5, 0, Math.PI*2); ctx.fill();
+    ctx.fillStyle = '#3d7fff';
+    ctx.beginPath(); ctx.arc(best.x, best.y, 3.5, 0, Math.PI*2); ctx.fill();
 
-            // Extract distinct parameter metrics
-            const dayMetrics = perfData[dayKey] || { pd: 0, pw: 0 };
-            const signPD = dayMetrics.pd >= 0 ? '+' : '';
-            const signPW = dayMetrics.pw >= 0 ? '+' : '';
-            
-            const classPD = dayMetrics.pd > 0 ? 'up' : (dayMetrics.pd < 0 ? 'down' : 'flat');
-            const classPW = dayMetrics.pw > 0 ? 'up' : (dayMetrics.pw < 0 ? 'down' : 'flat');
+    const prev = chartPoints.indexOf(best) > 0 ? chartPoints[chartPoints.indexOf(best)-1].info.val : best.info.val;
+    const chg  = best.info.val - prev;
+    const sign = chg >= 0 ? '+' : '';
+    tip.style.display = 'block';
+    tip.style.left = `${Math.min(best.x - 50, canvas.width - 130)}px`;
+    tip.style.top  = `${best.y - 50}px`;
+    tip.innerHTML  = `<strong>${best.info.date}</strong><br>$${best.info.val.toFixed(2)} <span style="color:${chg>=0?'var(--green)':'var(--red)'}">${sign}${chg.toFixed(2)}</span>`;
+});
 
-            const templateBlock = document.createElement('div');
-            templateBlock.className = `strategy-card ${isSaturday ? 'saturday-card' : ''} ${isTodayCard ? 'live-focus' : ''}`;
-            if(isTodayCard) {
-                templateBlock.id = "focused-day-card";
-            }
+document.getElementById('chartWrap').addEventListener('mouseleave', () => {
+    tip.style.display = 'none';
+    const slice = state.priceHistory.slice(-state.displayRange);
+    if (slice.length) paintChart(slice);
+});
 
-            let dynamicHeaderTag = '';
-            if (isTodayCard) {
-                dynamicHeaderTag = `<span class="live-tag">Today's Focus</span>`;
-            } else if (isSaturday) {
-                dynamicHeaderTag = `<span class="live-tag warn">Weekend Filter</span>`;
-            }
+// ───────────────────────────────────────────────────────────────
+// POSITION SIZING
+// ───────────────────────────────────────────────────────────────
 
-            templateBlock.innerHTML = `
-                ${dynamicHeaderTag}
-                <div class="card-header">
-                    <div class="day-title-row">
-                        <span class="day-name">${isSaturday ? 'Macro Scope' : dayKey}</span>
-                        <div class="badge-container">
-                            <span class="change-pill ${classPD}" title="Previous Close Price Delta">PD: ${signPD}${dayMetrics.pd.toFixed(2)}%</span>
-                            <span class="change-pill ${classPW}" title="Weekly Cumulative Delta">PW: ${signPW}${dayMetrics.pw.toFixed(2)}%</span>
-                        </div>
-                    </div>
-                    <span class="meta-context">${nameOfSelectedMonth} • Week ${displayedWeek} Scope</span>
-                </div>
-                
-                <div class="rule-box" onclick="triggerRowExecution('${identityString}-buy')">
-                    <input type="checkbox" id="${identityString}-buy" class="rule-cb" data-key="${identityString}-buy" onclick="event.stopPropagation(); updateGlobalMetrics();">
-                    <div class="rule-content">
-                        <span class="rule-tag ${isSaturday ? 'macro' : 'buy'}">${isSaturday ? 'Overnight Risk' : 'Buy Trigger'}</span>
-                        <div class="rule-desc">${dataPackage.buy}</div>
-                    </div>
-                </div>
+function updatePositionSizing() {
+    const balance  = parseFloat(document.getElementById('inpBalance').value) || 0;
+    const riskPct  = parseFloat(document.getElementById('inpRisk').value)    || 0;
+    const entry    = parseFloat(document.getElementById('inpEntry').value)   || 0;
+    const stop     = parseFloat(document.getElementById('inpStop').value)    || 0;
 
-                <div class="rule-box" onclick="triggerRowExecution('${identityString}-sell')">
-                    <input type="checkbox" id="${identityString}-sell" class="rule-cb" data-key="${identityString}-sell" onclick="event.stopPropagation(); updateGlobalMetrics();">
-                    <div class="rule-content">
-                        <span class="rule-tag ${isSaturday ? 'macro' : 'sell'}">${isSaturday ? 'Gap Hedge' : 'Sell Trim'}</span>
-                        <div class="rule-desc">${dataPackage.sell}</div>
-                    </div>
-                </div>
-            `;
-            matrixGridEl.appendChild(templateBlock);
-        });
-        loadSavedStates();
-        
-        setTimeout(() => {
-            const focusedCard = document.getElementById("focused-day-card");
-            if (focusedCard) {
-                focusedCard.scrollIntoView({ behavior: 'smooth', block: 'nearest' });
-            }
-        }, 100);
+    const cashRisk   = balance * (riskPct / 100);
+    const riskPerShr = entry - stop;
+
+    const riskMeter = document.getElementById('riskMeter');
+
+    if (riskPerShr <= 0 || entry <= 0 || stop >= entry) {
+        setText('calcCash',    `$${cashRisk.toFixed(2)}`);
+        setText('calcRPS',     'Stop must be < Entry');
+        setText('calcShares',  '0 Shares');
+        setText('calcCapital', '$0.00');
+        setText('calcPct',     '—');
+        riskMeter.textContent = 'INVALID — Check Stop Level';
+        riskMeter.className   = 'risk-meter danger';
+        return;
     }
 
-    function triggerRowExecution(boxId) {
-        const targetCheckbox = document.getElementById(boxId);
-        if (targetCheckbox) {
-            targetCheckbox.checked = !targetCheckbox.checked;
-            updateGlobalMetrics();
+    const shares   = Math.floor(cashRisk / riskPerShr);
+    const capital  = shares * entry;
+    const portPct  = (capital / balance) * 100;
+
+    setText('calcCash',    `$${cashRisk.toFixed(2)}`);
+    setText('calcRPS',     `$${riskPerShr.toFixed(2)}`);
+    setText('calcShares',  `${shares} Shares`);
+    setText('calcCapital', `$${capital.toFixed(2)}`);
+    setText('calcPct',     `${portPct.toFixed(1)}% of portfolio`);
+
+    // Risk classification
+    if (portPct > 25 || riskPct > 3) {
+        riskMeter.textContent = `⚠ ELEVATED RISK — ${portPct.toFixed(1)}% portfolio exposure`;
+        riskMeter.className   = 'risk-meter danger';
+    } else if (portPct > 15 || riskPct > 2) {
+        riskMeter.textContent = `△ CAUTION — ${portPct.toFixed(1)}% portfolio exposure`;
+        riskMeter.className   = 'risk-meter caution';
+    } else {
+        riskMeter.textContent = `✓ SAFE — ${portPct.toFixed(1)}% portfolio exposure`;
+        riskMeter.className   = 'risk-meter safe';
+    }
+}
+
+// ───────────────────────────────────────────────────────────────
+// PLAYBOOK / DAY MATRIX
+// ───────────────────────────────────────────────────────────────
+
+function getWeekPerf(weekNum) {
+    // Map week 1–4 into the price history
+    // Each "week" = 5 trading days. Week 4 = last 5, week 3 = days 6-10, etc.
+    const history = state.priceHistory;
+    const totalDays = history.length;
+
+    // For the current displayed month and week, try to find the relevant segment
+    // If we're showing the current month+week, use real trailing data
+    const isCurrentWindow = (state.displayMonth === TRUE_MONTH && state.displayWeek === weekNum);
+
+    let endIdx, startIdx;
+
+    if (isCurrentWindow && weekNum === TRUE_WEEK) {
+        // Use the most recent 5 trading days
+        endIdx   = totalDays - 1;
+        startIdx = Math.max(0, endIdx - 4);
+    } else {
+        // Offset backwards
+        const weeksBack = TRUE_WEEK - weekNum;
+        endIdx   = Math.max(0, totalDays - 1 - (weeksBack * 5));
+        startIdx = Math.max(0, endIdx - 4);
+    }
+
+    const slice = history.slice(startIdx, endIdx + 1);
+    if (slice.length < 2) return null;
+
+    const prevClose = startIdx > 0 ? history[startIdx - 1].val : slice[0].val;
+    const pct = (curr, prev) => prev ? ((curr - prev) / prev * 100) : 0;
+
+    const dayNames = ["Monday","Tuesday","Wednesday","Thursday","Friday"];
+    const result = { aggregate: pct(slice[slice.length-1].val, prevClose) };
+
+    dayNames.forEach((name, i) => {
+        const curr = slice[i]?.val;
+        const prev_d = i === 0 ? prevClose : slice[i-1]?.val;
+        result[name] = {
+            pd: curr && prev_d ? pct(curr, prev_d) : 0,
+            pw: curr ? pct(curr, prevClose) : 0,
+        };
+    });
+
+    // Saturday mirrors Friday
+    result["Saturday"] = result["Friday"];
+
+    return result;
+}
+
+function updatePlaybook() {
+    const grid = document.getElementById('dayGrid');
+    grid.innerHTML = '';
+
+    const monthName  = MONTH_NAMES[state.displayMonth];
+    const perf       = getWeekPerf(state.displayWeek);
+    const isLiveWindow = (state.displayMonth === TRUE_MONTH && state.displayWeek === TRUE_WEEK);
+
+    // Week tab highlight
+    document.querySelectorAll('.week-tab').forEach((b, i) => {
+        b.classList.remove('active','current-wk');
+        if (i + 1 === state.displayWeek) b.classList.add('active');
+        if (i + 1 === TRUE_WEEK) b.classList.add('current-wk');
+    });
+    document.getElementById('monthSel').value = state.displayMonth;
+
+    // Rolling badge
+    const rollEl = document.getElementById('rollingBadge');
+    if (perf) {
+        const agg = perf.aggregate;
+        const sign = agg >= 0 ? '+' : '';
+        rollEl.textContent = `${sign}${agg.toFixed(2)}%`;
+        rollEl.style.color = agg >= 0 ? 'var(--green)' : 'var(--red)';
+    } else {
+        rollEl.textContent = '—';
+        rollEl.style.color = 'var(--text-muted)';
+    }
+
+    Object.keys(DAY_RULES).forEach(day => {
+        const rules      = DAY_RULES[day];
+        const key        = `${state.displayMonth}-W${state.displayWeek}-${day}`;
+        const isToday    = isLiveWindow && day === ACTIVE_DAY;
+        const isWeekend  = day === "Saturday";
+        const metrics    = perf?.[day] || { pd: 0, pw: 0 };
+
+        const card = document.createElement('div');
+        card.className = `day-card ${isToday ? 'today-card' : ''} ${isWeekend ? 'weekend-card' : ''}`;
+        if (isToday) card.id = 'todayCard';
+
+        const pdClass = metrics.pd > 0 ? 'up' : (metrics.pd < 0 ? 'down' : 'flat');
+        const pwClass = metrics.pw > 0 ? 'up' : (metrics.pw < 0 ? 'down' : 'flat');
+        const pdSign  = metrics.pd >= 0 ? '+' : '';
+        const pwSign  = metrics.pw >= 0 ? '+' : '';
+
+        // Determine real date for the card (Mon–Fri of the current week)
+        let cardDateStr = '';
+        if (isLiveWindow) {
+            const dayIdx = ["Monday","Tuesday","Wednesday","Thursday","Friday"].indexOf(day);
+            if (dayIdx >= 0) {
+                const d = new Date(now);
+                const diff = dayIdx + 1 - (TODAY_DOW === 0 ? 7 : TODAY_DOW); // offset from Monday
+                d.setDate(d.getDate() + diff);
+                cardDateStr = ` · ${MONTH_NAMES[d.getMonth()].slice(0,3)} ${d.getDate()}`;
+            }
         }
-    }
 
-    function handleMonthChange(selectionValue) {
-        displayedMonth = parseInt(selectionValue);
-        drawOperationalMatrix();
-    }
-
-    function handleWeekChange(weekValue) {
-        displayedWeek = parseInt(weekValue);
-        drawOperationalMatrix();
-    }
-
-    const portfolioSizeInp = document.getElementById('portfolio-size');
-    const riskPctInp = document.getElementById('risk-pct');
-    const etfPriceInp = document.getElementById('etf-price');
-    const stopPriceInp = document.getElementById('stop-price');
-
-    function calculateRiskModel() {
-        const portSize = parseFloat(portfolioSizeInp.value) || 0;
-        const riskPct = parseFloat(riskPctInp.value) || 0;
-        const price = parseFloat(etfPriceInp.value) || 0;
-        const stop = parseFloat(stopPriceInp.value) || 0;
-
-        const maxCashRisk = portSize * (riskPct / 100);
-        const perShareRisk = price - stop;
-
-        if (perShareRisk <= 0 || price <= 0) {
-            document.getElementById('shares-result').innerText = "0 Shares";
-            document.getElementById('total-capital').innerText = "$0.00";
-            document.getElementById('risk-per-share').innerText = "Stop must be below entry";
-            return;
-        }
-
-        const exactShares = Math.floor(maxCashRisk / perShareRisk);
-        const capitalRequired = exactShares * price;
-
-        document.getElementById('cash-risk').innerText = `$${maxCashRisk.toFixed(2)}`;
-        document.getElementById('risk-per-share').innerText = `$${perShareRisk.toFixed(2)}`;
-        document.getElementById('shares-result').innerText = `${exactShares} Shares`;
-        document.getElementById('total-capital').innerText = `$${capitalRequired.toFixed(2)}`;
-    }
-
-    function updateGlobalMetrics() {
-        const checkboxes = document.querySelectorAll('.rule-cb');
-        let checkedCount = 0;
-        
-        checkboxes.forEach(cb => {
-            const storageKey = cb.getAttribute('data-key');
-            localStorage.setItem(`playbook-${storageKey}`, cb.checked ? 'true' : 'false');
-            if(cb.checked) checkedCount++;
-        });
-
-        const pct = Math.round((checkedCount / checkboxes.length) * 100) || 0;
-        document.getElementById('progress-text').innerText = `${checkedCount}/${checkboxes.length} Actions (${pct}%)`;
-        document.getElementById('progress-fill').style.width = `${pct}%`;
-    }
-
-    function loadSavedStates() {
-        const checkboxes = document.querySelectorAll('.rule-cb');
-        checkboxes.forEach(cb => {
-            const storageKey = cb.getAttribute('data-key');
-            const savedState = localStorage.getItem(`playbook-${storageKey}`);
-            if(savedState === 'true') {
-                cb.checked = true;
-            }
-        });
-        updateGlobalMetrics();
-    }
-
-    window.addEventListener('resize', paintLineChart);
-    [portfolioSizeInp, riskPctInp, etfPriceInp, stopPriceInp].forEach(input => {
-        input.addEventListener('input', calculateRiskModel);
+        card.innerHTML = `
+            ${isToday    ? `<span class="card-badge today">Today's Focus</span>` : ''}
+            ${isWeekend  ? `<span class="card-badge weekend">Macro Scope</span>` : ''}
+            <div class="card-day-name">${isWeekend ? 'Weekend Audit' : day}${cardDateStr}</div>
+            <div class="card-month-label">${monthName} · Week ${state.displayWeek}</div>
+            <div class="perf-pills">
+                <span class="perf-pill ${pdClass}" title="Day over Day Change">PD: ${pdSign}${metrics.pd.toFixed(2)}%</span>
+                <span class="perf-pill ${pwClass}" title="Week-to-Date Change">WTD: ${pwSign}${metrics.pw.toFixed(2)}%</span>
+            </div>
+            <div class="rule-row" id="${key}-buy-row" onclick="toggleRule('${key}-buy')">
+                <input type="checkbox" id="${key}-buy" class="cb" data-key="${key}-buy" onclick="event.stopPropagation(); onCheck();">
+                <div class="rule-body">
+                    <span class="rule-type ${isWeekend ? 'macro' : 'buy'}">${isWeekend ? 'Overnight Risk' : 'Buy / Add'}</span>
+                    <div class="rule-text">${rules.buy}</div>
+                </div>
+            </div>
+            <div class="rule-row" id="${key}-sell-row" onclick="toggleRule('${key}-sell')">
+                <input type="checkbox" id="${key}-sell" class="cb" data-key="${key}-sell" onclick="event.stopPropagation(); onCheck();">
+                <div class="rule-body">
+                    <span class="rule-type ${isWeekend ? 'macro' : 'sell'}">${isWeekend ? 'Gap Hedge' : 'Sell / Trim'}</span>
+                    <div class="rule-text">${rules.sell}</div>
+                </div>
+            </div>
+        `;
+        grid.appendChild(card);
     });
 
-    window.onload = () => {
-        document.getElementById('live-time-stamp').innerText = `Live Target Focus: ${currentActiveTargetDay}`;
-        paintLineChart();
-        drawOperationalMatrix();
-        calculateRiskModel();
-    };
+    restoreCheckStates();
+    if (isLiveWindow) {
+        setTimeout(() => {
+            const tc = document.getElementById('todayCard');
+            if (tc) tc.scrollIntoView({ behavior: 'smooth', block: 'nearest' });
+        }, 120);
+    }
+}
+
+function toggleRule(id) {
+    const cb = document.getElementById(id);
+    if (!cb) return;
+    cb.checked = !cb.checked;
+    onCheck();
+}
+
+function onCheck() {
+    document.querySelectorAll('.cb').forEach(cb => {
+        const key = cb.getAttribute('data-key');
+        try { localStorage.setItem(`etf-pb-${key}`, cb.checked ? '1' : '0'); } catch(e) {}
+        // Visual state
+        const row = document.getElementById(`${key}-row`);
+        if (row) row.classList.toggle('checked', cb.checked);
+    });
+    updateCompliance();
+}
+
+function restoreCheckStates() {
+    document.querySelectorAll('.cb').forEach(cb => {
+        const key = cb.getAttribute('data-key');
+        try {
+            const saved = localStorage.getItem(`etf-pb-${key}`);
+            cb.checked = saved === '1';
+        } catch(e) { cb.checked = false; }
+        const row = document.getElementById(`${key}-row`);
+        if (row) row.classList.toggle('checked', cb.checked);
+    });
+    updateCompliance();
+}
+
+function updateCompliance() {
+    const all = document.querySelectorAll('.cb');
+    const checked = [...all].filter(c => c.checked).length;
+    const pct = all.length ? Math.round((checked / all.length) * 100) : 0;
+    document.getElementById('compFill').style.width = `${pct}%`;
+    document.getElementById('compCount').textContent = `${checked}/${all.length} · ${pct}%`;
+}
+
+// ───────────────────────────────────────────────────────────────
+// AUTO-REFRESH
+// ───────────────────────────────────────────────────────────────
+
+function toggleAutoRefresh() {
+    state.autoRefresh = !state.autoRefresh;
+    const tog = document.getElementById('autoToggle');
+    const cd  = document.getElementById('cdText');
+    tog.classList.toggle('on', state.autoRefresh);
+
+    if (state.autoRefresh) {
+        cd.style.display = '';
+        state.countdown = 60;
+        cd.textContent = '60s';
+        state.cdInterval = setInterval(() => {
+            state.countdown--;
+            cd.textContent = `${state.countdown}s`;
+            if (state.countdown <= 0) {
+                state.countdown = 60;
+                fetchAllData();
+            }
+        }, 1000);
+    } else {
+        cd.style.display = 'none';
+        clearInterval(state.cdInterval);
+    }
+}
+
+// ───────────────────────────────────────────────────────────────
+// NAVIGATION
+// ───────────────────────────────────────────────────────────────
+
+function handleMonthChange(val) {
+    state.displayMonth = parseInt(val);
+    updatePlaybook();
+}
+
+function setWeek(n) {
+    state.displayWeek = n;
+    updatePlaybook();
+}
+
+// ───────────────────────────────────────────────────────────────
+// UI HELPERS
+// ───────────────────────────────────────────────────────────────
+
+function setText(id, val) {
+    const el = document.getElementById(id);
+    if (el) el.textContent = val;
+}
+
+function setStatus(type, text) {
+    const dot = document.getElementById('statusDot');
+    const lbl = document.getElementById('statusText');
+    dot.className = `status-dot ${type}`;
+    lbl.textContent = text;
+}
+
+function showLoading(show, text) {
+    const el = document.getElementById('loadingOverlay');
+    el.classList.toggle('show', show);
+    if (text) setLoadingText(text);
+}
+
+function setLoadingText(t) {
+    const el = document.getElementById('loadingText');
+    if (el) el.textContent = t;
+}
+
+function showBanner(msg, isError=false) {
+    const el = document.getElementById('tickerBanner');
+    document.getElementById('tickerMsg').textContent = msg;
+    el.classList.add('show');
+    setTimeout(() => el.classList.remove('show'), 8000);
+}
+
+function showError(msg) {
+    const el = document.getElementById('errorBanner');
+    document.getElementById('errorMsg').textContent = msg;
+    el.classList.add('show');
+}
+
+function fmtTime(d) {
+    return d.toLocaleTimeString('en-US', { hour:'2-digit', minute:'2-digit', second:'2-digit' });
+}
+
+// ───────────────────────────────────────────────────────────────
+// INIT
+// ───────────────────────────────────────────────────────────────
+
+document.getElementById('monthSel').value = TRUE_MONTH;
+
+['inpBalance','inpRisk','inpEntry','inpStop'].forEach(id => {
+    document.getElementById(id).addEventListener('input', updatePositionSizing);
+});
+
+window.addEventListener('resize', () => {
+    const slice = state.priceHistory.slice(-state.displayRange);
+    if (slice.length) paintChart(slice);
+});
+
+// On load: try live data, fall back to seed
+window.addEventListener('load', async () => {
+    setStatus('loading', 'Fetching market data…');
+    // Pre-render with seed data immediately (no spinner blocking)
+    useSeedData();
+    // Then attempt live fetch in background
+    await fetchAllData();
+});
 </script>
-
 </body>
 </html>
